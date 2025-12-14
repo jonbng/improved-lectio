@@ -1,0 +1,551 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@theme inline {
+  --font-sans: "Geist", sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ========================================
+   Custom Styles for Improved Lectio
+   ======================================== */
+
+@layer components {
+  /* Ensure html and body take full height */
+  html {
+    height: 100% !important;
+  }
+
+  body.il-dashboard-active {
+    height: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Root element for our app */
+  #il-root {
+    height: 100vh !important;
+    width: 100% !important;
+  }
+
+  /* Force sidebar wrapper to be a proper flex row */
+  [data-slot="sidebar-wrapper"] {
+    display: flex !important;
+    flex-direction: row !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+  }
+
+  /* Sidebar wrapper - must be visible (override hidden class) */
+  [data-slot="sidebar"].hidden {
+    display: block !important;
+  }
+
+  [data-slot="sidebar"] {
+    display: block !important;
+    height: 100vh !important;
+  }
+
+  /* Sidebar inner container - fixed left panel */
+  [data-slot="sidebar-container"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    width: var(--sidebar-width, 16rem) !important;
+    background-color: var(--sidebar) !important;
+    border-right: 1px solid var(--sidebar-border) !important;
+    overflow: hidden !important;
+  }
+
+  /* Sidebar inner content wrapper */
+  [data-sidebar="sidebar"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    width: 100% !important;
+    background-color: var(--sidebar) !important;
+  }
+
+  /* Sidebar gap - the space taken by the sidebar */
+  [data-slot="sidebar-gap"] {
+    flex-shrink: 0 !important;
+    width: var(--sidebar-width, 16rem) !important;
+  }
+
+  /* Main content area */
+  [data-slot="sidebar-inset"] {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  /* Lectio content scroll container */
+  #il-lectio-content {
+    flex: 1 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background: #f8f9fa;
+  }
+
+  /* Original content wrapper */
+  #il-original-content {
+    min-height: 100%;
+  }
+
+  /* Apply Geist font everywhere except icon fonts */
+  body.il-dashboard-active,
+  body.il-dashboard-active *:not(.ls-fonticon) {
+    font-family: "Geist", sans-serif !important;
+  }
+
+  .ls-fonticon {
+    font-family: ls-font-icons !important;
+  }
+
+  /* Hide old navigation and page headers */
+  #il-original-content .ls-master-header,
+  #il-original-content #s_m_mastermenu,
+  #il-original-content #m_mastermenu,
+  #il-original-content nav.lectioToolbar,
+  #il-original-content .ls-subnav1,
+  #il-original-content .ls-subnav-container nav,
+  #il-original-content .ls-master-pageheader {
+    display: none !important;
+  }
+
+  /* Hide footer */
+  #il-original-content .ls-master-footer {
+    display: none !important;
+  }
+
+  /* Hide mobile menu */
+  #il-original-content .ls-mobil-footer {
+    display: none !important;
+  }
+
+  /* Hide help tip */
+  #il-original-content #s_m_helptipDiv,
+  #il-original-content .helptip-wrap {
+    display: none !important;
+  }
+
+  /* Sidebar content - prevent horizontal overflow */
+  [data-slot="sidebar-content"] {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  /* Ensure sidebar footer is clickable */
+  [data-slot="sidebar-footer"] {
+    position: relative;
+    z-index: 10;
+  }
+
+  [data-slot="sidebar-footer"] button {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
+  /* Dropdown menu portal z-index */
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+  }
+
+  /* ========================================
+     Messages Page (beskeder2.aspx) Styles
+     ======================================== */
+
+  /* Messages page container - two column layout */
+  #il-original-content .ls-std-rowblock-selecteditem {
+    display: flex !important;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  /* Force mobile-page-drawer to show on our "desktop" view */
+  #il-original-content .mobile-page-drawer {
+    display: block !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Folder tree panel */
+  #il-original-content .documentchooser-foldertree-col {
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    flex-shrink: 0 !important;
+    background: var(--background) !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid var(--border) !important;
+    padding: 0.75rem !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    position: relative !important;
+    max-height: calc(100vh - 200px) !important;
+  }
+
+  /* Show folder tree on desktop */
+  #il-original-content .ls-foldertree2 {
+    display: block !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+  }
+
+  /* Reorder folder list - make Nyeste first */
+  #il-original-content #s_m_Content_Content_ListGridSelectionTree {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Nyeste (node -70) first */
+  #il-original-content [lec-node-id="-70"] { order: 1 !important; }
+  /* Alle ulæste */
+  #il-original-content [lec-node-id="-40"] { order: 2 !important; }
+  /* Alle med flag */
+  #il-original-content [lec-node-id="-50"] { order: 3 !important; }
+  /* Egne beskeder */
+  #il-original-content [lec-node-id="-10"] { order: 4 !important; }
+  /* Sendte beskeder */
+  #il-original-content [lec-node-id="-80"] { order: 5 !important; }
+  /* Alle slettede */
+  #il-original-content [lec-node-id="-60"] { order: 6 !important; }
+  /* Hold, groups etc */
+  #il-original-content [lec-node-id="-20"] { order: 7 !important; }
+  #il-original-content [lec-node-id="-30"] { order: 8 !important; }
+  #il-original-content [lec-node-id="-35"] { order: 9 !important; }
+
+  /* Tree node container */
+  #il-original-content [lec-role="treeviewnodecontainer"] {
+    margin: 0.125rem 0 !important;
+  }
+
+  /* Tree node styling */
+  #il-original-content .TreeNode-container {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0.375rem 0.5rem !important;
+    border-radius: 0.375rem !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s !important;
+  }
+
+  #il-original-content .TreeNode-container:hover {
+    background: var(--accent) !important;
+  }
+
+  /* Selected folder styling */
+  #il-original-content .TreeNode.selectedFolder {
+    background: var(--accent) !important;
+    border-radius: 0.25rem !important;
+  }
+
+  #il-original-content .TreeNode {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-decoration: none !important;
+    color: var(--foreground) !important;
+    flex: 1 !important;
+    padding: 0.25rem !important;
+    cursor: pointer !important;
+  }
+
+  #il-original-content .TreeNode-title {
+    font-size: 0.8125rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #il-original-content .TreeNode-icon {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+  }
+
+  #il-original-content .TreeNode-chevron {
+    width: 16px !important;
+    height: 16px !important;
+    cursor: pointer !important;
+    opacity: 0.5 !important;
+    flex-shrink: 0 !important;
+  }
+
+  #il-original-content .TreeNode-chevron:hover {
+    opacity: 1 !important;
+  }
+
+  #il-original-content .TreeNode-sublist {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0.25rem !important;
+    cursor: pointer !important;
+  }
+
+  #il-original-content .TreeNode-indent {
+    flex-shrink: 0 !important;
+  }
+
+  /* Nested tree items (sublists) */
+  #il-original-content [lec-role="ltv-sublist"] {
+    margin-left: 0.5rem !important;
+    border-left: 1px solid var(--border) !important;
+    padding-left: 0.5rem !important;
+  }
+
+  /* Folder content panel */
+  #il-original-content .documentchooser-foldercontent-col {
+    flex: 1 !important;
+    min-width: 0 !important;
+    background: var(--background) !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid var(--border) !important;
+    overflow: hidden !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Message folder header */
+  #il-original-content .message-folder-header {
+    padding: 1rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: var(--background) !important;
+  }
+
+  #il-original-content .message-folder-header h1 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin: 0 !important;
+  }
+
+  /* Message table styling */
+  #il-original-content .ls-table-layout5 {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #il-original-content .ls-table-layout5 th {
+    text-align: left !important;
+    padding: 0.75rem 1rem !important;
+    font-weight: 500 !important;
+    font-size: 0.8125rem !important;
+    color: var(--muted-foreground) !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: var(--muted) !important;
+  }
+
+  #il-original-content .ls-table-layout5 td {
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    font-size: 0.875rem !important;
+  }
+
+  #il-original-content .ls-table-layout5 tr:hover td {
+    background: var(--accent) !important;
+  }
+
+  #il-original-content .ls-table-layout5 tr.unread td {
+    font-weight: 500 !important;
+  }
+
+  /* Message toolbar */
+  #il-original-content .ls-std-rowblock-toolbarcontainer {
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: var(--background) !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+  }
+
+  /* Hide mobile-only elements on messages page */
+  #il-original-content .OnlyMobile {
+    display: none !important;
+  }
+
+  /* Show desktop elements */
+  #il-original-content .OnlyDesktop {
+    display: table-cell !important;
+  }
+
+  /* Button styling in messages */
+  #il-original-content .buttonlink a,
+  #il-original-content .ls-std-rowblock-toolbarcontainer a {
+    color: var(--primary) !important;
+    text-decoration: none !important;
+  }
+
+  #il-original-content .buttonlink a:hover {
+    text-decoration: underline !important;
+  }
+
+  /* Hide search in folder checkbox area cleanup */
+  #il-original-content .ls-search-container {
+    display: flex !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+  }
+
+  /* Message table wrapper */
+  #il-original-content .ls-table-wrapper {
+    overflow-x: auto !important;
+  }
+
+  /* Icon buttons in message list */
+  #il-original-content .buttonIcon {
+    cursor: pointer !important;
+    opacity: 0.7 !important;
+    transition: opacity 0.15s !important;
+  }
+
+  #il-original-content .buttonIcon:hover {
+    opacity: 1 !important;
+  }
+
+  /* New message button styling */
+  #il-original-content .button a[id*="NewMessage"],
+  #il-original-content a.LectioLinkButtonBig {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 1rem !important;
+    background: var(--primary) !important;
+    color: var(--primary-foreground) !important;
+    border-radius: 0.375rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    transition: opacity 0.15s !important;
+  }
+
+  #il-original-content .button a[id*="NewMessage"]:hover,
+  #il-original-content a.LectioLinkButtonBig:hover {
+    opacity: 0.9 !important;
+  }
+
+  /* Ensure form elements are visible */
+  #il-original-content input[type="text"],
+  #il-original-content input[type="search"] {
+    padding: 0.5rem 0.75rem !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.375rem !important;
+    background: var(--background) !important;
+    color: var(--foreground) !important;
+  }
+
+  #il-original-content input[type="checkbox"] {
+    cursor: pointer !important;
+  }
+}

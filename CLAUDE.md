@@ -1,0 +1,1 @@
+- btw we have all the lectio source code scripts (decompiled) in @lectio-scripts/ and some examples of the html before the extension does anything in @lectio-html/lectio/

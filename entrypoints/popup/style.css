@@ -1,0 +1,24 @@
+:root {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  min-width: 200px;
+}
+
+#app {
+  padding: 1rem;
+}
+
+.popup h1 {
+  font-size: 1.2rem;
+  margin: 0 0 0.5rem;
+}
+
+.popup p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
