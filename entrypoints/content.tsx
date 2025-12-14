@@ -4,6 +4,7 @@ import {
   SidebarProvider,
   SidebarInset,
 } from '@/components/ui/sidebar';
+import { initPreloading } from '@/lib/preload';
 import '@/styles/globals.css';
 
 export default defineContentScript({
@@ -49,6 +50,10 @@ function DashboardLayout() {
 }
 
 function initLayout() {
+  // If this page was prerendered and is now activating, it's already set up
+  // @ts-ignore
+  const wasPrerendered = (window as any).__IL_PRERENDERED__ && !document.prerendering;
+
   // Don't inject on login page or other non-app pages
   if (!document.querySelector('.ls-master-header')) {
     console.log('[Improved Lectio] Not on main app page, skipping');
@@ -107,8 +112,22 @@ function initLayout() {
 
       contentContainer.appendChild(wrapper);
 
+      // Hide skeleton with fade, then reveal the page
+      const skeleton = document.getElementById('il-skeleton');
+      if (skeleton) {
+        skeleton.classList.add('il-hide');
+        // Remove skeleton after transition
+        setTimeout(() => skeleton.remove(), 150);
+      }
+
       // Reveal the page now that everything is ready
       document.body.classList.add('il-ready');
+
+      // Initialize preloading for faster navigation
+      const schoolId = window.location.pathname.match(/\/lectio\/(\d+)\//)?.[1];
+      if (schoolId) {
+        initPreloading(schoolId);
+      }
 
       console.log('[Improved Lectio] Dashboard layout injected');
     }
