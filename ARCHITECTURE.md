@@ -61,15 +61,19 @@ improved-lectio/
 │
 ├── components/               # UI components
 │   ├── AppSidebar.tsx        # Main sidebar navigation
+│   ├── StudentSearch.tsx     # Universal search component
+│   ├── ViewingScheduleHeader.tsx  # Header when viewing others
 │   └── ui/                   # shadcn/ui components
 │       ├── avatar.tsx
 │       ├── button.tsx
+│       ├── collapsible.tsx
 │       ├── dropdown-menu.tsx
 │       ├── sidebar.tsx
 │       └── ... (20+ components)
 │
 ├── lib/                      # Utility libraries
 │   ├── preload.ts            # Speculation Rules & prefetching
+│   ├── profile-cache.ts      # User profile caching for cross-page persistence
 │   └── utils.ts              # Helper functions (cn())
 │
 ├── hooks/                    # React/Preact hooks
@@ -195,14 +199,53 @@ Key responsibilities:
 Features:
 - Dynamic school name extraction
 - User profile display with dropdown menu
-- Two navigation groups:
-  - **Main:** Forside, Skema, Opgaver, Lektier, Beskeder, Søg
-  - **Secondary:** Karakterer, Fravær, Studieplan, Bøger, Dokumenter, Spørgeskema
+- Profile picture click-to-enlarge with fullscreen overlay
+- Navigation groups:
+  - **Main:** Forside, Skema, Elever, Opgaver, Lektier, Beskeder
+  - **Secondary:** Karakterer, Fravær, Studieplan, Dokumenter, Spørgeskema, UV-beskrivelser
+  - **Skemaer:** Collapsible "Find Skema" (Elev, Lærer, Klasse, Lokale, etc.) and "Ændringer" (Dagsændringer, Ugeændringer, Månedskalender)
+- Profile dropdown includes: Profil, Studiekort, SPS, Bøger, Kontakt, Hjælp, Log ud
 - Active page detection and highlighting
+- Uses cached profile data when viewing other students' schedules
 - Collapsible sidebar support
 - Mobile-responsive design
 
-### 4. Preload System (`lib/preload.ts`)
+### 4. Student Search (`components/StudentSearch.tsx`)
+
+**Purpose:** Fast search on FindSkema pages
+
+Features:
+- Fetches autocomplete data from Lectio's cache API
+- Adapts to page type (elev, lærer, lokale, hold, etc.)
+- Type-specific filtering and URL generation
+- Recent searches stored in localStorage
+- Keyboard shortcut (Cmd/Ctrl+K) to focus
+- Color-coded badges for different entity types
+- Includes rooms in student/teacher search for convenience
+
+### 5. Viewing Schedule Header (`components/ViewingScheduleHeader.tsx`)
+
+**Purpose:** Shows whose schedule you're viewing when not on your own
+
+Features:
+- Displays viewed person's name, class, and profile picture
+- Click-to-enlarge profile picture
+- "Back to your schedule" link
+- Color-coded badge (Elev/Lærer)
+- Only shown when viewing another student/teacher's schedule
+
+### 6. Profile Cache (`lib/profile-cache.ts`)
+
+**Purpose:** Persist user profile data across pages
+
+Features:
+- Caches user name, class, and profile picture in localStorage
+- Distinguishes between logged-in user and viewed user
+- Uses meta tags and mobile menu links to identify logged-in user
+- Prevents caching viewed student's data as logged-in user's data
+- Enables profile display when viewing other students' schedules
+
+### 7. Preload System (`lib/preload.ts`)
 
 **Purpose:** Performance optimization through speculative loading
 
@@ -223,17 +266,19 @@ Implementation:
 }
 ```
 
-### 5. Global Styles (`styles/globals.css`)
+### 8. Global Styles (`styles/globals.css`)
 
 **Purpose:** Complete visual overhaul
 
 Key styling areas:
 - CSS custom properties for theming (dark mode ready)
 - Hides original Lectio navigation, header, footer
-- Messages page two-column layout
+- Messages page two-column layout with folder tree
+- UV beskrivelser page - converts table to modern grid of pills
 - Sidebar positioning (fixed, 16rem width)
 - Geist font application
 - Smooth transitions and animations
+- Print page exclusion
 
 ---
 
@@ -343,14 +388,21 @@ HTML snapshots of Lectio pages before extension modification:
 ## Features Summary
 
 ### Implemented
-- Modern sidebar navigation
+- Modern sidebar navigation with collapsible sections
 - Visual redesign with Geist font
 - Skeleton loading (FOUC prevention)
 - Speculation Rules prerendering
 - Hover-based prefetching
-- Messages page two-column layout
+- Messages page two-column layout with folder tree
 - Auto-redirect to "Nyeste" folder
-- User profile display
+- User profile display with click-to-enlarge pictures
+- Profile caching for cross-page persistence
+- Student/Teacher/Room search on FindSkema pages
+- Type-adaptive search (elev, lærer, lokale, hold, etc.)
+- Recent searches with localStorage persistence
+- "Viewing schedule" header when on another person's page
+- UV beskrivelser page styling (grid of pills)
+- Print page support (sidebar hidden)
 - Dark mode CSS variables (ready for implementation)
 
 ### Preserved from Original Lectio
