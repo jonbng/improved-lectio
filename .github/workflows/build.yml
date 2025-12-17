@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,6 +29,12 @@ jobs:
       - name: Build Firefox extension
         run: bun run build:firefox
 
+      - name: Zip Chrome extension
+        run: cd .output && zip -r chrome-extension.zip chrome-mv3
+
+      - name: Zip Firefox extension
+        run: cd .output && zip -r firefox-extension.zip firefox-mv2
+
       - name: Upload Chrome extension
         uses: actions/upload-artifact@v4
         with:
@@ -37,3 +46,18 @@ jobs:
         with:
           name: firefox-extension
           path: .output/firefox-mv2
+
+      - name: Create Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.sha }}
+          name: Build ${{ github.sha }}
+          body: |
+            Automated build from commit ${{ github.sha }}
+
+            **Commit:** ${{ github.event.head_commit.message }}
+          files: |
+            .output/chrome-extension.zip
+            .output/firefox-extension.zip
+          prerelease: true

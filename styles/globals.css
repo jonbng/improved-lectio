@@ -548,4 +548,89 @@
   #il-original-content input[type="checkbox"] {
     cursor: pointer !important;
   }
+
+  /* ========================================
+     UV Beskrivelser Page Styles
+     ======================================== */
+
+  /* Turn the boring table into a nice grid */
+  #il-original-content #m_Content_gvhold,
+  #il-original-content #m_Content_gvhold tbody {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+
+  #il-original-content #m_Content_gvhold tbody {
+    padding: 0 !important;
+  }
+
+  /* Hide the table header row */
+  #il-original-content #m_Content_gvhold tr:first-child {
+    display: none !important;
+  }
+
+  /* Style each row as an inline item */
+  #il-original-content #m_Content_gvhold tr {
+    display: inline-flex !important;
+  }
+
+  #il-original-content #m_Content_gvhold td {
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  /* Style the links as nice pills/chips */
+  #il-original-content #m_Content_gvhold .buttonlink a {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.5rem 1rem !important;
+    background: var(--background) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.5rem !important;
+    color: var(--foreground) !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+  }
+
+  #il-original-content #m_Content_gvhold .buttonlink a:hover {
+    background: var(--accent) !important;
+    border-color: var(--ring) !important;
+    text-decoration: none !important;
+  }
+
+  /* Style the island container better */
+  #il-original-content .lf-island {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    margin: 1rem !important;
+  }
+
+  #il-original-content .islandHeaderContainer {
+    padding: 1rem 1.25rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: var(--muted) !important;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+  }
+
+  #il-original-content .islandHeader {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: var(--foreground) !important;
+  }
+
+  #il-original-content .islandContent {
+    padding: 0.5rem !important;
+  }
+
+  /* Hide the disabled tab button */
+  #il-original-content .ls-tabs4 .lectioTabToolbar {
+    display: none !important;
+  }
 }

@@ -7,7 +7,27 @@ export default defineConfig({
   manifest: {
     name: 'Improved Lectio',
     description: 'Better styling and improved functionality for Lectio',
+    version: '0.0.1',
+    author: {
+      email: 'extensions@jonathanb.dk',
+    },
+    homepage_url: 'https://github.com/jonbng/improved-lectio',
     permissions: ['storage'],
+  },
+  hooks: {
+    'build:manifestGenerated': (wxt, manifest) => {
+      if (wxt.config.browser === 'firefox') {
+        manifest.browser_specific_settings = {
+          gecko: {
+            id: '{a1b2c3d4-5678-4e9f-b012-3456789abcde}',
+            strict_min_version: '140.0',
+            data_collection_permissions: {
+              required: ['none'],
+            },
+          },
+        };
+      }
+    },
   },
   webExt: {
     startUrls: ['https://www.lectio.dk/lectio/94/SkemaNy.aspx'],
