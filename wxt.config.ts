@@ -8,9 +8,7 @@ export default defineConfig({
     name: 'Improved Lectio',
     description: 'Better styling and improved functionality for Lectio',
     version: '0.0.2',
-    author: {
-      email: 'extensions@jonathanb.dk',
-    },
+    author: 'Jonathan Bangert',
     homepage_url: 'https://github.com/jonbng/improved-lectio',
     permissions: ['storage'],
   },
