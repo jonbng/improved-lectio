@@ -7,7 +7,7 @@ export default defineConfig({
   manifest: {
     name: 'Improved Lectio',
     description: 'Better styling and improved functionality for Lectio',
-    version: '0.0.1',
+    version: '0.0.2',
     author: {
       email: 'extensions@jonathanb.dk',
     },
