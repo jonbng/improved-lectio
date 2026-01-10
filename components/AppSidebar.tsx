@@ -30,6 +30,7 @@ import {
   BookMarked,
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -207,6 +208,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Get logo URL at render time when browser context is available
+  const logoUrl = browser.runtime.getURL('/assets/logo-transparent.svg');
+
   const school = getSchoolInfo();
   const schoolId = school.id;
   const schoolName = school.name;
@@ -255,9 +259,12 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="p-4">
-        <a href={`${baseUrl}/skemany.aspx`} className="text-xl font-semibold truncate">
-          {schoolName}
-        </a>
+        <div className="flex items-center gap-3">
+          <img src={logoUrl} alt="BetterLectio" width={32} height={32} className="size-8 shrink-0" />
+          <span className="text-[1.35rem] font-semibold truncate text-gray-800 group-data-[collapsible=icon]:hidden">
+            {schoolName === 'Sorø Akademis Skole' ? 'Sorø Akademi' : schoolName}
+          </span>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>

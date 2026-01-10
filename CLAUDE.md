@@ -23,6 +23,23 @@ Browser extension that modernizes [Lectio](https://www.lectio.dk/), a Danish sch
 ## Architecture
 Content scripts inject a custom Preact UI that wraps the original Lectio DOM. The original DOM is **moved** (not cloned) to preserve event handlers and functionality.
 
+## Cross-Browser Compatibility
+
+**IMPORTANT:** Firefox is stricter than Chrome with URL handling. When using `fetch()`, always use absolute URLs:
+
+```ts
+// WRONG - breaks on Firefox
+fetch("/lectio/login_list.aspx")
+
+// CORRECT - works on all browsers
+fetch(new URL("/lectio/path.aspx", window.location.origin).href)
+
+// ALSO CORRECT - template literal with origin
+fetch(`${window.location.origin}/lectio/${schoolId}/path.aspx`)
+```
+
+Note: `window.location.href = "/relative/path"` and `<a href="/path">` work fine with relative URLs - this only applies to `fetch()` and similar APIs.
+
 ## Features
 - **Custom Sidebar** - Modern navigation with collapsible "Find Skema" and "Ændringer" sections
 - **Student Search** - Fast search on FindSkema pages, adapts to type (elev, lærer, lokale, etc.)

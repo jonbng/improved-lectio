@@ -11,6 +11,12 @@ export default defineConfig({
     author: { email: 'jonathan@bangert.dk' },
     homepage_url: 'https://github.com/jonbng/betterlectio',
     permissions: ['storage'],
+    web_accessible_resources: [
+      {
+        resources: ['assets/*'],
+        matches: ['*://*.lectio.dk/*'],
+      },
+    ],
   },
   hooks: {
     'build:manifestGenerated': (wxt, manifest) => {

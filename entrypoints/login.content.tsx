@@ -70,7 +70,7 @@ async function initLoginPage() {
   } else {
     // Main page - fetch the school list
     try {
-      const response = await fetch("/lectio/login_list.aspx?forcemobile=1");
+      const response = await fetch(new URL("/lectio/login_list.aspx?forcemobile=1", window.location.origin).href);
       const html = await response.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");

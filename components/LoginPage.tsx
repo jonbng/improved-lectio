@@ -19,6 +19,9 @@ export function LoginPage({ schools }: LoginPageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // Get logo URL at render time when browser context is available
+  const logoUrl = browser.runtime.getURL("/assets/logo-transparent.png");
+
   // Filter schools based on query
   const filteredSchools = query
     ? schools.filter((school) =>
@@ -123,6 +126,11 @@ export function LoginPage({ schools }: LoginPageProps) {
       {/* Header */}
       <header className="pt-12 pb-6">
         <div className="max-w-2xl mx-auto px-4 text-center">
+          <img
+            src={logoUrl}
+            alt="BetterLectio"
+            className="h-12 mx-auto mb-4"
+          />
           <h1 className="text-2xl font-semibold text-gray-800">
             Vælg skole for at fortsætte
           </h1>
@@ -130,7 +138,7 @@ export function LoginPage({ schools }: LoginPageProps) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-8">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-5">
         {/* Last school card */}
         {lastSchool && (
           <div className="mb-8">

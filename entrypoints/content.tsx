@@ -25,6 +25,18 @@ export default defineContentScript({
   },
 });
 
+function replaceFavicon() {
+  // Remove existing favicons
+  document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(el => el.remove());
+
+  // Add our favicon
+  const favicon = document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.type = 'image/x-icon';
+  favicon.href = browser.runtime.getURL('/assets/favicon.ico');
+  document.head.appendChild(favicon);
+}
+
 function injectFont() {
   const preconnect1 = document.createElement('link');
   preconnect1.rel = 'preconnect';
@@ -116,6 +128,9 @@ function initLayout() {
       (window as any).__IL_PROFILE_PIC__ = url.toString();
     }
   }
+
+  // Replace Lectio's favicon with our logo
+  replaceFavicon();
 
   // Inject Geist font
   injectFont();
