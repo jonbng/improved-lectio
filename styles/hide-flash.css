@@ -1,19 +1,29 @@
 /* Critical CSS injected at document_start via manifest - no JS delay */
 /* This prevents FOUC on Firefox where JS injection is slower */
 
-/* Hide body immediately, fade in when ready */
-body {
-  opacity: 0 !important;
+/* Hide entire document immediately - html exists before body */
+html:not(.il-ready):not(.il-prerendered) {
+  visibility: hidden !important;
 }
 
-/* Reveal when ready - class can be on body or html (for document_start timing) */
-body.il-ready,
+/* Skeleton must break out of hidden html */
+#il-skeleton {
+  visibility: visible !important;
+}
+
+/* Reveal when ready */
+html.il-ready,
+html.il-prerendered {
+  visibility: visible !important;
+}
+
+/* Body fade-in effect (only after html is visible) */
 html.il-ready body {
   opacity: 1 !important;
   transition: opacity 0.1s ease-out !important;
 }
 
-/* Skip transition for prerendered pages - instant reveal */
+/* Skip transition for prerendered pages */
 html.il-prerendered body {
   opacity: 1 !important;
   transition: none !important;
@@ -31,10 +41,10 @@ html.il-prerendered body {
   z-index: 99999;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
   opacity: 1;
   transition: opacity 0.1s ease-out;
+  color: hsl(0 0% 15%);
 }
 
 #il-skeleton.il-hide {
@@ -42,30 +52,175 @@ html.il-prerendered body {
   pointer-events: none;
 }
 
-/* Skeleton header placeholder */
-#il-skeleton-header {
-  height: 1.75rem;
-  width: 70%;
-  background: hsl(0 0% 90%);
-  border-radius: 0.375rem;
-  margin-bottom: 1.5rem;
+/* Sidebar header */
+.il-sidebar-header {
+  padding: 1rem;
 }
 
-/* Skeleton nav items */
-.il-skeleton-item {
-  height: 2.5rem;
-  background: hsl(0 0% 93%);
-  border-radius: 0.375rem;
+.il-header-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.il-header-title:hover {
+  opacity: 0.8;
+}
+
+/* Sidebar content */
+.il-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0.5rem;
+}
+
+/* Navigation groups */
+.il-nav-group {
+  padding: 0.5rem 0;
+}
+
+.il-nav-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(0 0% 45%);
+  padding: 0.25rem 0.75rem;
   margin-bottom: 0.25rem;
 }
 
-.il-skeleton-item:nth-child(2) { width: 60%; }
-.il-skeleton-item:nth-child(3) { width: 75%; }
-.il-skeleton-item:nth-child(4) { width: 55%; }
-.il-skeleton-item:nth-child(5) { width: 70%; }
-.il-skeleton-item:nth-child(6) { width: 65%; }
-.il-skeleton-item:nth-child(7) { width: 50%; }
+/* Navigation items */
+.il-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1.125rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s;
+}
 
+.il-nav-item:hover {
+  background: hsl(0 0% 92%);
+}
+
+.il-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* Separator */
+.il-separator {
+  height: 1px;
+  background: hsl(0 0% 90%);
+  margin: 0.5rem 0.75rem;
+}
+
+/* Sidebar footer */
+.il-sidebar-footer {
+  padding: 0.5rem;
+}
+
+/* User section */
+.il-user-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.il-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: hsl(0 0% 90%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.il-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.il-avatar-fallback {
+  font-size: 1rem;
+  font-weight: 500;
+  color: hsl(0 0% 45%);
+}
+
+.il-user-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.il-user-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.il-user-class {
+  font-size: 1rem;
+  color: hsl(0 0% 45%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Skeleton placeholders - only for dynamic content */
+.il-skeleton-text {
+  background: linear-gradient(90deg, hsl(0 0% 90%) 25%, hsl(0 0% 85%) 50%, hsl(0 0% 90%) 75%);
+  background-size: 200% 100%;
+  animation: il-shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+}
+
+.il-skeleton-header {
+  height: 1.75rem;
+  width: 70%;
+}
+
+.il-skeleton-avatar {
+  background: linear-gradient(90deg, hsl(0 0% 90%) 25%, hsl(0 0% 85%) 50%, hsl(0 0% 90%) 75%);
+  background-size: 200% 100%;
+  animation: il-shimmer 1.5s infinite;
+}
+
+.il-skeleton-name {
+  height: 1.25rem;
+  width: 80%;
+}
+
+.il-skeleton-class {
+  height: 1rem;
+  width: 40%;
+}
+
+@keyframes il-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Hide on mobile */
 @media (max-width: 768px) {
   #il-skeleton { display: none; }
 }

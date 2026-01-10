@@ -181,7 +181,7 @@ export function StudentSearch({ schoolId, searchType = 'all' }: SearchProps) {
 
         if (!afdelingId) {
           // Try fetching FindSkemaAdv page to get the afdeling
-          const advPage = await fetch(`/lectio/${schoolId}/FindSkemaAdv.aspx`);
+          const advPage = await fetch(`${window.location.origin}/lectio/${schoolId}/FindSkemaAdv.aspx`);
           const html = await advPage.text();
           const match = html.match(/AvanceretSkema_(\d+)_/);
           if (match) {
@@ -195,7 +195,7 @@ export function StudentSearch({ schoolId, searchType = 'all' }: SearchProps) {
 
         // Fetch the autocomplete data
         const response = await fetch(
-          `/lectio/${schoolId}/cache/DropDown.aspx?type=AvanceretSkema&afdeling=${afdelingId}&subcache=${year}`
+          `${window.location.origin}/lectio/${schoolId}/cache/DropDown.aspx?type=AvanceretSkema&afdeling=${afdelingId}&subcache=${year}`
         );
         const data = await response.json();
 

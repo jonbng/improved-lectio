@@ -52,7 +52,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 
-function getSchoolId(): string {
+function getSchoolIdFromUrl(): string {
   const match = window.location.pathname.match(/\/lectio\/(\d+)\//);
   return match ? match[1] : '94';
 }
@@ -61,7 +61,7 @@ function getCurrentPage(): string {
   return window.location.pathname.split('/').pop()?.replace('.aspx', '').toLowerCase() || '';
 }
 
-function getSchoolName(): string {
+function getSchoolNameFromPage(): string | null {
   // Try meta tag first (format: "Lectio- School Name")
   const meta = document.querySelector('meta[name="application-name"]');
   if (meta) {
@@ -74,7 +74,15 @@ function getSchoolName(): string {
   if (titleMatch) return titleMatch[1];
   // Last resort
   const el = document.querySelector('.ls-master-header-institution-name');
-  return el?.textContent?.trim() || 'Lectio';
+  return el?.textContent?.trim() || null;
+}
+
+function getSchoolInfo(): { id: string; name: string } {
+  const cached = getCachedProfile();
+  return {
+    id: cached?.schoolId || getSchoolIdFromUrl(),
+    name: cached?.schoolName || getSchoolNameFromPage() || 'Lectio',
+  };
 }
 
 interface CachedProfile {
@@ -83,6 +91,8 @@ interface CachedProfile {
   className: string;
   pictureUrl: string | null;
   studentId: string | null;
+  schoolId: string | null;
+  schoolName: string | null;
 }
 
 function getCachedProfile(): CachedProfile | null {
@@ -197,8 +207,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const schoolId = getSchoolId();
-  const schoolName = getSchoolName();
+  const school = getSchoolInfo();
+  const schoolId = school.id;
+  const schoolName = school.name;
   const profilePic = getProfilePicture();
   const userName = getUserName();
   const userClass = getUserClass();
@@ -469,7 +480,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       {/* Enlarged profile picture overlay */}
       {imageEnlarged && profilePic && (
         <div
-          className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center cursor-pointer backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center cursor-pointer backdrop-blur-sm"
           onClick={() => setImageEnlarged(false)}
         >
           <img

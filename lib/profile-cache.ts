@@ -1,4 +1,11 @@
 const PROFILE_CACHE_KEY = 'il-user-profile';
+const LOGIN_STATE_KEY = 'il-login-state';
+
+export interface LoginState {
+  isLoggedIn: boolean;
+  schoolId: string | null;
+  lastChecked: number;
+}
 
 export interface UserProfile {
   name: string;
@@ -6,6 +13,8 @@ export interface UserProfile {
   className: string;
   pictureUrl: string | null;
   studentId: string | null;
+  schoolId: string | null;
+  schoolName: string | null;
   cachedAt: number;
 }
 
@@ -34,6 +43,79 @@ export function cacheProfile(profile: UserProfile): void {
     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
   } catch {
     // Ignore errors
+  }
+}
+
+/**
+ * Check if the current page indicates the user is logged in.
+ * Uses multiple signals: meta tags, body class, mobile menu.
+ */
+export function isLoggedIn(): boolean {
+  // Check for elevid in the start URL meta tag (most reliable)
+  const meta = document.querySelector('meta[name="msapplication-starturl"]');
+  if (meta?.getAttribute('content')?.includes('elevid=')) {
+    return true;
+  }
+
+  // Check for masterbody class (only on logged-in pages)
+  if (document.body?.classList.contains('masterbody')) {
+    return true;
+  }
+
+  // Check for logout link in mobile menu
+  const logoutLink = document.querySelector('#mobilMereSheetMenuList a[href*="logout.aspx"]');
+  if (logoutLink) {
+    return true;
+  }
+
+  return false;
+}
+
+export function getCachedLoginState(): LoginState | null {
+  try {
+    const stored = localStorage.getItem(LOGIN_STATE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // Ignore errors
+  }
+  return null;
+}
+
+export function cacheLoginState(state: LoginState): void {
+  try {
+    localStorage.setItem(LOGIN_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore errors
+  }
+}
+
+export function clearLoginState(): void {
+  try {
+    localStorage.removeItem(LOGIN_STATE_KEY);
+    localStorage.removeItem(PROFILE_CACHE_KEY);
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
+ * Update login state cache. Call this after DOM is ready.
+ */
+export function updateLoginState(): void {
+  const schoolId = window.location.pathname.match(/\/lectio\/(\d+)\//)?.[1] || null;
+  const loggedIn = isLoggedIn();
+
+  cacheLoginState({
+    isLoggedIn: loggedIn,
+    schoolId,
+    lastChecked: Date.now(),
+  });
+
+  // If logged out, clear profile cache
+  if (!loggedIn) {
+    clearLoginState();
   }
 }
 
@@ -133,6 +215,27 @@ export function extractViewedPerson(): ViewedPerson | null {
   };
 }
 
+function getSchoolIdFromUrl(): string | null {
+  const match = window.location.pathname.match(/\/lectio\/(\d+)\//);
+  return match ? match[1] : null;
+}
+
+function getSchoolNameFromPage(): string | null {
+  // Try meta tag first (format: "Lectio- School Name")
+  const meta = document.querySelector('meta[name="application-name"]');
+  if (meta) {
+    const content = meta.getAttribute('content') || '';
+    const match = content.match(/^Lectio-\s*(.+)$/);
+    if (match) return match[1];
+  }
+  // Fallback to title (format: "... - Lectio - School Name")
+  const titleMatch = document.title.match(/ - Lectio - (.+)$/);
+  if (titleMatch) return titleMatch[1];
+  // Last resort
+  const el = document.querySelector('.ls-master-header-institution-name');
+  return el?.textContent?.trim() || null;
+}
+
 export function extractProfileFromPage(): Partial<UserProfile> | null {
   // Only extract profile data when viewing our own page
   if (!isViewingOwnPage()) return null;
@@ -150,6 +253,10 @@ export function extractProfileFromPage(): Partial<UserProfile> | null {
   // Get logged-in user's ID
   profile.studentId = getLoggedInUserId();
 
+  // Extract school info
+  profile.schoolId = getSchoolIdFromUrl();
+  profile.schoolName = getSchoolNameFromPage();
+
   // Extract profile picture - only when on own page
   const profileImg = document.querySelector('#s_m_HeaderContent_picctrlthumbimage') as HTMLImageElement;
   if (profileImg?.src) {
@@ -159,7 +266,7 @@ export function extractProfileFromPage(): Partial<UserProfile> | null {
   }
 
   // Only return if we have meaningful data
-  if (profile.name || profile.pictureUrl) {
+  if (profile.name || profile.pictureUrl || profile.schoolName) {
     return profile;
   }
   return null;
@@ -178,6 +285,8 @@ export function updateProfileCache(): void {
     className: extracted.className || existing?.className || '',
     pictureUrl: extracted.pictureUrl || existing?.pictureUrl || null,
     studentId: extracted.studentId || existing?.studentId || null,
+    schoolId: extracted.schoolId || existing?.schoolId || null,
+    schoolName: extracted.schoolName || existing?.schoolName || null,
     cachedAt: Date.now(),
   };
 

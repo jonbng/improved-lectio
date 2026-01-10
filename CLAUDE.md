@@ -1,4 +1,6 @@
-# Improved Lectio
+# BetterLectio
+
+@ARHITECTURE.md
 
 Browser extension that modernizes [Lectio](https://www.lectio.dk/), a Danish school management system.
 
@@ -38,7 +40,34 @@ bun run build        # Production build
 bun run zip          # Package extension
 ```
 
+## Lectio CLI Tool
+
+A CLI tool for fetching authenticated Lectio pages. Use this to capture raw HTML for development and testing.
+
+**Location:** `tools/lectio-cli/`
+
+```bash
+# First time: install dependencies
+cd tools/lectio-cli && bun install && cd ../..
+
+# Authenticate (opens browser for login)
+bun run lectio auth --school 94
+
+# Fetch pages and save to lectio-html/
+bun run lectio fetch skemany.aspx -o lectio-html/lectio/94/skemany.html
+bun run lectio fetch beskeder2.aspx -o lectio-html/lectio/94/beskeder2.html
+
+# Check session status
+bun run lectio status
+
+# Search for schools
+bun run lectio schools --search "sorø"
+```
+
+All commands support `--json` for machine-readable output. Session cookies are stored in `~/.lectio-cli/` (outside repo).
+
 ## Reference Materials
-- `@lectio-scripts/` - Decompiled Lectio source code
-- `@lectio-html/lectio/` - Original HTML snapshots (before extension modifies them)
-- `@ARCHITECTURE.md` - Full project documentation
+- `tools/lectio-cli/` - CLI tool for fetching authenticated Lectio pages
+- `lectio-scripts/` - Decompiled Lectio source code
+- `lectio-html/` - HTML snapshots captured with the CLI tool
+- `ARCHITECTURE.md` - Full project documentation

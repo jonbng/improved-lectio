@@ -1,8 +1,8 @@
-# Improved Lectio - Architecture & Project Documentation
+# BetterLectio - Architecture & Project Documentation
 
 ## Overview
 
-**Improved Lectio** is a browser extension that enhances the user experience of [Lectio](https://www.lectio.dk/), a Danish educational management system widely used by schools in Denmark. The extension provides a modern, clean interface while preserving all original Lectio functionality.
+**BetterLectio** is a browser extension that enhances the user experience of [Lectio](https://www.lectio.dk/), a Danish educational management system widely used by schools in Denmark. The extension provides a modern, clean interface while preserving all original Lectio functionality.
 
 ### Key Goals
 - Replace Lectio's outdated UI with a modern design
@@ -50,7 +50,7 @@
 ## Project Structure
 
 ```
-improved-lectio/
+betterlectio/
 ├── entrypoints/              # Extension entry points
 │   ├── content.tsx           # Main content script
 │   ├── hide-flash.content.ts # FOUC prevention script
@@ -290,7 +290,7 @@ export default defineConfig({
   extensionApi: "chrome",
   modules: ["@wxt-dev/module-react"],
   manifest: {
-    name: "Improved Lectio",
+    name: "BetterLectio",
     permissions: ["storage"],
     // React aliased to Preact for smaller bundle
   },

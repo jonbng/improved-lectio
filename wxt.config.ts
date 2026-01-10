@@ -5,11 +5,11 @@ import path from 'path';
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   manifest: {
-    name: 'Improved Lectio',
+    name: 'BetterLectio',
     description: 'Better styling and improved functionality for Lectio',
     version: '0.0.2',
-    author: 'Jonathan Bangert',
-    homepage_url: 'https://github.com/jonbng/improved-lectio',
+    author: { email: 'jonathan@bangert.dk' },
+    homepage_url: 'https://github.com/jonbng/betterlectio',
     permissions: ['storage'],
   },
   hooks: {
@@ -28,7 +28,7 @@ export default defineConfig({
     },
   },
   webExt: {
-    startUrls: ['https://www.lectio.dk/lectio/94/SkemaNy.aspx'],
+    startUrls: ['https://www.lectio.dk/'],
   },
   vite: () => ({
     plugins: [tailwindcss()],

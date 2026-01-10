@@ -42,7 +42,7 @@ function addSkemaSpeculationRule(skemaUrl: string): void {
   script.textContent = JSON.stringify(rules);
   document.head.appendChild(script);
 
-  console.log('[Improved Lectio] Will prerender skema on idle');
+  console.log('[BetterLectio] Will prerender skema on idle');
 }
 
 /**
@@ -78,7 +78,7 @@ export function setupHoverPrefetching(): void {
       link.as = 'document';
       document.head.appendChild(link);
 
-      console.log('[Improved Lectio] Prefetching:', href);
+      console.log('[BetterLectio] Prefetching:', href);
     }, 65);
   };
 
@@ -116,11 +116,11 @@ export function initPreloading(schoolId: string): void {
     link.href = skemaUrl;
     link.as = 'document';
     document.head.appendChild(link);
-    console.log('[Improved Lectio] Prefetching skema (no speculation rules)');
+    console.log('[BetterLectio] Prefetching skema (no speculation rules)');
   }
 
   // Hover-based prefetching for everything else
   setupHoverPrefetching();
 
-  console.log('[Improved Lectio] Preloading initialized');
+  console.log('[BetterLectio] Preloading initialized');
 }

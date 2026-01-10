@@ -7,13 +7,14 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { initPreloading } from '@/lib/preload';
-import { updateProfileCache, getCachedProfile, extractViewedPerson, isViewingOwnPage } from '@/lib/profile-cache';
+import { updateProfileCache, updateLoginState, getCachedProfile, extractViewedPerson, isViewingOwnPage } from '@/lib/profile-cache';
+import { updatePageTitle, observeTitleChanges } from '@/lib/page-titles';
 import '@/styles/globals.css';
 
 export default defineContentScript({
   matches: ['*://*.lectio.dk/*'],
   main() {
-    console.log('[Improved Lectio] Content script loaded');
+    console.log('[BetterLectio] Content script loaded');
 
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
@@ -57,12 +58,32 @@ function initLayout() {
   // @ts-ignore
   const wasPrerendered = (window as any).__IL_PRERENDERED__ && !document.prerendering;
 
+  // Check if this is the login.aspx page (session expired redirect, e.g. /lectio/94/login.aspx)
+  const isLoginAspx = /\/lectio\/\d+\/login\.aspx/.test(window.location.pathname);
+  if (isLoginAspx) {
+    console.log('[BetterLectio] On login.aspx - session expired, clearing login state');
+    updateLoginState(); // This will detect not logged in and clear the cache
+    document.documentElement.classList.add('il-ready');
+    return;
+  }
+
   // Don't inject on login page, print pages, or other non-app pages
   const isPrintPage = window.location.pathname.includes('print.aspx');
-  if (!document.querySelector('.ls-master-header') || isPrintPage) {
-    console.log('[Improved Lectio] Not on main app page or print page, skipping');
+  const hasMainHeader = !!document.querySelector('.ls-master-header');
+
+  if (!hasMainHeader || isPrintPage) {
+    console.log('[BetterLectio] Not on main app page or print page, skipping');
+
+    // If we're on a school page (has /lectio/XX/) but no main header,
+    // user is likely logged out - update the state
+    const isSchoolPage = /\/lectio\/\d+\//.test(window.location.pathname);
+    if (isSchoolPage && !hasMainHeader && !isPrintPage) {
+      console.log('[BetterLectio] On school page but not logged in, clearing login state');
+      updateLoginState(); // This will detect not logged in and clear the cache
+    }
+
     // Still reveal the page
-    document.body.classList.add('il-ready');
+    document.documentElement.classList.add('il-ready');
     return;
   }
 
@@ -72,8 +93,12 @@ function initLayout() {
     return;
   }
 
-  // Update profile cache with any data we can extract from this page
+  // Update login state and profile cache
+  updateLoginState();
   updateProfileCache();
+
+  // Update page title to cleaner format
+  updatePageTitle();
 
   // Set cached profile data on window for AppSidebar to use
   const cachedProfile = getCachedProfile();
@@ -137,7 +162,7 @@ function initLayout() {
       }
 
       // Reveal the page now that everything is ready
-      document.body.classList.add('il-ready');
+      document.documentElement.classList.add('il-ready');
 
       // Initialize preloading for faster navigation
       const schoolId = window.location.pathname.match(/\/lectio\/(\d+)\//)?.[1];
@@ -155,7 +180,10 @@ function initLayout() {
         }
       }
 
-      console.log('[Improved Lectio] Dashboard layout injected');
+      // Set up title observer for dynamic updates (e.g., unread message count)
+      observeTitleChanges();
+
+      console.log('[BetterLectio] Dashboard layout injected');
     }
   });
 }
@@ -178,9 +206,10 @@ function injectStudentSearch(schoolId: string) {
   pageHeader.parentNode?.insertBefore(searchContainer, pageHeader.nextSibling);
 
   // Render the search component with the appropriate type
-  render(<StudentSearch schoolId={schoolId} searchType={searchType || 'elev'} />, searchContainer);
+  // Default to 'all' (students, teachers, rooms) when no type specified
+  render(<StudentSearch schoolId={schoolId} searchType={searchType || 'all'} />, searchContainer);
 
-  console.log('[Improved Lectio] Student search injected with type:', searchType || 'elev');
+  console.log('[BetterLectio] Student search injected with type:', searchType || 'all');
 }
 
 function injectViewingScheduleHeader(schoolId: string) {
@@ -210,5 +239,5 @@ function injectViewingScheduleHeader(schoolId: string) {
     headerContainer
   );
 
-  console.log('[Improved Lectio] Viewing schedule header injected');
+  console.log('[BetterLectio] Viewing schedule header injected');
 }

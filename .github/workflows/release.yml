@@ -1,0 +1,137 @@
+name: Release Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: version
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Parse version components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Bump based on input
+          case "${{ github.event.inputs.version_bump }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+          # Update package.json
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '$NEW_VERSION';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+          # Update wxt.config.ts
+          sed -i "s/version: '[^']*'/version: '$NEW_VERSION'/" wxt.config.ts
+
+          # Commit version bump
+          git add package.json wxt.config.ts
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git push
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Chrome extension
+        run: bun run build
+
+      - name: Build Firefox extension
+        run: bun run build:firefox
+
+      - name: Package extensions
+        run: |
+          cd .output
+          zip -r chrome-extension.zip chrome-mv3
+          zip -r firefox-extension.zip firefox-mv2
+
+      - name: Upload to Chrome Web Store
+        continue-on-error: true
+        run: |
+          npx chrome-webstore-upload-cli upload \
+            --source .output/chrome-extension.zip \
+            --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
+            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
+            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
+            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+      - name: Upload to Firefox Add-ons (AMO)
+        continue-on-error: true
+        run: |
+          cd .output/firefox-mv2
+          npx web-ext sign \
+            --channel listed \
+            --api-key ${{ secrets.AMO_API_KEY }} \
+            --api-secret ${{ secrets.AMO_API_SECRET }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            ## BetterLectio v${{ steps.version.outputs.version }}
+
+            ### Installation
+            - **Chrome**: Install from [Chrome Web Store](https://chrome.google.com/webstore) or download `chrome-extension.zip`
+            - **Firefox**: Install from [Firefox Add-ons](https://addons.mozilla.org) or download `firefox-extension.zip`
+
+            ### Manual Installation
+            1. Download the appropriate zip file for your browser
+            2. Extract the contents
+            3. Chrome: Go to `chrome://extensions`, enable Developer Mode, click "Load unpacked"
+            4. Firefox: Go to `about:debugging`, click "Load Temporary Add-on"
+          files: |
+            .output/chrome-extension.zip
+            .output/firefox-extension.zip
+          generate_release_notes: true

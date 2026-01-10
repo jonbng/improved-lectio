@@ -1,3 +1,3 @@
 export default defineBackground(() => {
-  console.log('[Improved Lectio] Background script loaded');
+  console.log('[BetterLectio] Background script loaded');
 });

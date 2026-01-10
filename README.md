@@ -1,4 +1,4 @@
-# Improved Lectio!
+# BetterLectio
 
 A browser extension that provides better styling and improved functionality for [Lectio](https://www.lectio.dk/).
 
