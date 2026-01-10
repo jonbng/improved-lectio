@@ -1,11 +1,48 @@
-# BetterLectio
+<p align="center">
+  <img src="public/assets/logo-transparent.png" alt="BetterLectio Logo" width="128" height="128">
+</p>
 
-A browser extension that provides better styling and improved functionality for [Lectio](https://www.lectio.dk/).
+<h1 align="center">BetterLectio</h1>
+
+<p align="center">
+  A browser extension that modernizes <a href="https://www.lectio.dk/">Lectio</a>, the Danish school management system.
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#development">Development</a> •
+  <a href="#tech-stack">Tech Stack</a>
+</p>
+
+---
 
 ## Features
 
-- Modern UI with improved styling
-- Enhanced user experience
+- **Modern Sidebar** — Clean navigation with collapsible sections for schedules and changes
+- **Fast Search** — Quickly find students, teachers, rooms, and classes with keyboard shortcuts (Cmd/Ctrl+K)
+- **Smart Prefetching** — Pages load instantly using Speculation Rules API and hover prefetching
+- **Improved Messages** — Two-column layout with folder tree, auto-redirects to newest messages
+- **Profile Pictures** — Click to enlarge any profile picture to full size
+- **Skeleton Loading** — Smooth transitions with no flash of unstyled content
+- **Cross-Page Profiles** — Your profile stays visible when viewing other students' schedules
+
+## Installation
+
+### Chrome Web Store
+*Coming soon*
+
+### Firefox Add-ons
+*Coming soon*
+
+### From Source
+
+1. Clone this repository
+2. Run `bun install` to install dependencies
+3. Run `bun run build` for Chrome or `bun run build:firefox` for Firefox
+4. Load the extension:
+   - **Chrome:** Go to `chrome://extensions`, enable Developer mode, click "Load unpacked" and select `.output/chrome-mv3`
+   - **Firefox:** Go to `about:debugging`, click "This Firefox", click "Load Temporary Add-on" and select any file in `.output/firefox-mv2`
 
 ## Development
 
@@ -13,57 +50,43 @@ A browser extension that provides better styling and improved functionality for 
 
 - [Bun](https://bun.sh/) (recommended) or Node.js
 
-### Setup
+### Commands
 
 ```bash
+# Install dependencies
 bun install
+
+# Start development server
+bun run dev          # Chrome
+bun run dev:firefox  # Firefox
+
+# Build for production
+bun run build          # Chrome
+bun run build:firefox  # Firefox
+
+# Package for distribution
+bun run zip          # Chrome
+bun run zip:firefox  # Firefox
 ```
-
-### Development
-
-```bash
-# Chrome
-bun run dev
-
-# Firefox
-bun run dev:firefox
-```
-
-### Build
-
-```bash
-# Chrome
-bun run build
-
-# Firefox
-bun run build:firefox
-```
-
-### Package for distribution
-
-```bash
-# Chrome
-bun run zip
-
-# Firefox
-bun run zip:firefox
-```
-
-## Installation
-
-### From source
-
-1. Run `bun run build`
-2. Open Chrome and navigate to `chrome://extensions`
-3. Enable "Developer mode"
-4. Click "Load unpacked" and select the `.output/chrome-mv3` directory
 
 ## Tech Stack
 
-- [WXT](https://wxt.dev/) - Browser extension framework
-- [Preact](https://preactjs.com/) - Fast 3kB alternative to React
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
-- [Radix UI](https://www.radix-ui.com/) - Unstyled, accessible UI components
+| Technology | Purpose |
+|------------|---------|
+| [WXT](https://wxt.dev/) | Browser extension framework |
+| [Preact](https://preactjs.com/) | Lightweight React alternative (3KB) |
+| [TypeScript](https://www.typescriptlang.org/) | Type safety |
+| [Tailwind CSS](https://tailwindcss.com/) | Utility-first styling |
+| [shadcn/ui](https://ui.shadcn.com/) | UI component system |
+| [Radix UI](https://www.radix-ui.com/) | Accessible primitives |
+
+## Browser Support
+
+| Browser | Status |
+|---------|--------|
+| Chrome | Supported (Manifest V3) |
+| Firefox | Supported (Manifest V2) |
+| Edge | Should work (untested) |
 
 ## License
 

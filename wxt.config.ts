@@ -8,7 +8,7 @@ export default defineConfig({
     name: 'BetterLectio',
     description: 'Better styling and improved functionality for Lectio',
     version: '0.0.2',
-    author: { email: 'jonathan@bangert.dk' },
+    author: 'Jonathan Bangert <jonathan@bangert.dk>' as any,
     homepage_url: 'https://github.com/jonbng/betterlectio',
     permissions: ['storage'],
     web_accessible_resources: [
@@ -23,8 +23,8 @@ export default defineConfig({
       if (wxt.config.browser === 'firefox') {
         manifest.browser_specific_settings = {
           gecko: {
-            id: '{a1b2c3d4-5678-4e9f-b012-3456789abcde}',
-            strict_min_version: '140.0',
+            id: '{c3b94c3b-a7d2-4130-9adc-75cc174b0aaa}',
+            strict_min_version: '109.0',
             data_collection_permissions: {
               required: ['none'],
             },
