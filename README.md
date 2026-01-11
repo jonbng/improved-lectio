@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="public/assets/logo-transparent.png" alt="BetterLectio Logo" width="128" height="128">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/assets/logo-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="public/assets/logo-transparent.png">
+    <img src="public/assets/logo-transparent.png" alt="BetterLectio Logo" width="128" height="128">
+  </picture>
 </p>
 
 <h1 align="center">BetterLectio</h1>
