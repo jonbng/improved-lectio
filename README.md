@@ -33,11 +33,23 @@
 
 ## Installation
 
-### Chrome Web Store
-*Coming soon*
-
-### Firefox Add-ons
-*Coming soon*
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/betterlectio/cbopfnaegoknpplkngoppmmomppimhkh">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="chrome-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="chrome-light.svg">
+      <img src="chrome-dark.svg" alt="Add to Chrome" height="60">
+    </picture>
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://addons.mozilla.org/firefox/addon/betterlectio/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="firefox-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="firefox-light.svg">
+      <img src="firefox-dark.svg" alt="Add to Firefox" height="60">
+    </picture>
+  </a>
+</p>
 
 ### From Source
 
