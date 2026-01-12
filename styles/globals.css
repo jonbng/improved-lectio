@@ -723,9 +723,9 @@
     overflow: hidden !important;
   }
 
-  /* Highlight today's column - solid background (amber/orange tint) */
+  /* Highlight today's column - solid background (amber-yellow tint) */
   #il-original-content .s2skema td[data-date].is-today {
-    background-color: rgba(251, 191, 36, 0.1) !important;
+    background-color: rgba(250, 204, 21, 0.1) !important; /* yellow-400 */
   }
 
   /* Make all child elements transparent so column background shows through */
@@ -736,13 +736,13 @@
 
   /* Info header row today highlight */
   #il-original-content .s2skema .s2infoHeader.is-today {
-    background-color: rgba(251, 191, 36, 0.1) !important;
+    background-color: rgba(250, 204, 21, 0.1) !important; /* yellow-400 */
   }
 
   /* Today's header styling */
   #il-original-content .s2skema .s2dayHeader td.is-today {
-    background-color: rgb(245, 158, 11) !important;
-    color: white !important;
+    background-color: rgb(252, 211, 77) !important; /* amber-300 */
+    color: black !important;
     font-weight: 600 !important;
     border-radius: 0.375rem 0.375rem 0 0 !important;
   }
