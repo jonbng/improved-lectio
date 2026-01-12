@@ -98,7 +98,7 @@ jobs:
       - name: Upload to Chrome Web Store
         continue-on-error: true
         run: |
-          npx chrome-webstore-upload-cli upload \
+          npx --yes chrome-webstore-upload-cli upload \
             --source .output/chrome-extension.zip \
             --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
             --client-id ${{ secrets.CHROME_CLIENT_ID }} \
@@ -109,7 +109,7 @@ jobs:
         continue-on-error: true
         run: |
           cd .output/firefox-mv2
-          npx web-ext sign \
+          npx --yes web-ext sign \
             --channel listed \
             --api-key ${{ secrets.AMO_API_KEY }} \
             --api-secret ${{ secrets.AMO_API_SECRET }}
