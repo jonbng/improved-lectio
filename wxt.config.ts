@@ -7,7 +7,7 @@ export default defineConfig({
   manifest: {
     name: 'BetterLectio',
     description: 'Better styling and improved functionality for Lectio',
-    version: '0.0.2',
+    version: '0.0.3',
     author: 'Jonathan Bangert <jonathan@bangert.dk>' as any,
     homepage_url: 'https://github.com/jonbng/betterlectio',
     permissions: ['storage'],
@@ -24,7 +24,7 @@ export default defineConfig({
         manifest.browser_specific_settings = {
           gecko: {
             id: '{c3b94c3b-a7d2-4130-9adc-75cc174b0aaa}',
-            strict_min_version: '109.0',
+            strict_min_version: '0.0.3',
             data_collection_permissions: {
               required: ['none'],
             },
