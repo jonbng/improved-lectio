@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { LoginPage, type School } from "@/components/LoginPage";
-import { getCachedLoginState } from "@/lib/profile-cache";
+import { getCachedLoginState, clearLoginState } from "@/lib/profile-cache";
 import { getLastSchool } from "@/lib/school-storage";
 import "@/styles/globals.css";
 
@@ -18,10 +18,10 @@ export default defineContentScript({
 });
 
 /**
- * Check if user is likely still logged in and redirect to their last school.
+ * Check if user is actually logged in by verifying with a request to their school.
  * Returns true if redirecting, false otherwise.
  */
-function checkAndRedirectIfLoggedIn(): boolean {
+async function checkAndRedirectIfLoggedIn(): Promise<boolean> {
   const loginState = getCachedLoginState();
   const lastSchool = getLastSchool();
 
@@ -32,13 +32,36 @@ function checkAndRedirectIfLoggedIn(): boolean {
 
     if (isRecent) {
       console.log(
-        "[BetterLectio] User appears to be logged in, redirecting to last school:",
-        lastSchool.name
+        "[BetterLectio] Cached login state found, verifying session..."
       );
-      // Redirect to schedule page
-      const scheduleUrl = lastSchool.url.replace("default.aspx", "skemany.aspx");
-      window.location.href = scheduleUrl;
-      return true;
+
+      // Verify session is actually valid by fetching a page that requires auth
+      const scheduleUrl = new URL(lastSchool.url.replace("default.aspx", "skemany.aspx"), window.location.origin).href;
+
+      try {
+        const response = await fetch(scheduleUrl, {
+          method: 'HEAD',
+          credentials: 'include'
+        });
+
+        // If we get redirected to login.aspx, session is invalid
+        if (response.url.includes('login.aspx')) {
+          console.log("[BetterLectio] Session expired, showing login page");
+          clearLoginState();
+          return false;
+        }
+
+        // Session is valid, redirect
+        console.log(
+          "[BetterLectio] Session valid, redirecting to last school:",
+          lastSchool.name
+        );
+        window.location.href = scheduleUrl;
+        return true;
+      } catch (err) {
+        console.log("[BetterLectio] Failed to verify session:", err);
+        return false;
+      }
     }
   }
 
@@ -58,7 +81,7 @@ async function initLoginPage() {
   }
 
   // Check if user is already logged in and should be redirected
-  if (checkAndRedirectIfLoggedIn()) {
+  if (await checkAndRedirectIfLoggedIn()) {
     return; // Don't render login page, we're redirecting
   }
 

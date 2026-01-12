@@ -52,6 +52,7 @@ import {
   SidebarGroupContent,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
+import { clearLoginState } from '@/lib/profile-cache';
 
 function getSchoolIdFromUrl(): string {
   const match = window.location.pathname.match(/\/lectio\/(\d+)\//);
@@ -446,6 +447,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 <div className="p-1 border-t border-border">
                   <a
                     href={`${baseUrl}/logout.aspx`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      clearLoginState();
+                      fetch(`${baseUrl}/logout.aspx`).then(() => {
+                        window.location.href = "https://www.lectio.dk";
+                      });
+                    }}
                     className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-destructive"
                   >
                     <LogOut className="size-4" />
