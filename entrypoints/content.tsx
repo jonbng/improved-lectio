@@ -168,15 +168,7 @@ function initLayout() {
 
       contentContainer.appendChild(wrapper);
 
-      // Hide skeleton with fade, then reveal the page
-      const skeleton = document.getElementById('il-skeleton');
-      if (skeleton) {
-        skeleton.classList.add('il-hide');
-        // Remove skeleton after transition
-        setTimeout(() => skeleton.remove(), 150);
-      }
-
-      // Reveal the page now that everything is ready
+      // Reveal the page now that our UI is ready
       document.documentElement.classList.add('il-ready');
 
       // Initialize preloading for faster navigation
