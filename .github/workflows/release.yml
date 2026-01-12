@@ -72,8 +72,8 @@ jobs:
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
 
-          # Update wxt.config.ts
-          sed -i "s/version: '[^']*'/version: '$NEW_VERSION'/" wxt.config.ts
+          # Update wxt.config.ts (only the manifest version on line 10, not strict_min_version)
+          sed -i "10s/version: '[^']*'/version: '$NEW_VERSION'/" wxt.config.ts
 
           # Commit version bump
           git add package.json wxt.config.ts

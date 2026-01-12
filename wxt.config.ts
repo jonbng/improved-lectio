@@ -24,7 +24,7 @@ export default defineConfig({
         manifest.browser_specific_settings = {
           gecko: {
             id: '{c3b94c3b-a7d2-4130-9adc-75cc174b0aaa}',
-            strict_min_version: '0.0.3',
+            strict_min_version: '109.0',
             data_collection_permissions: {
               required: ['none'],
             },
