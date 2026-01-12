@@ -638,4 +638,133 @@
   #il-original-content .ls-tabs4 .lectioTabToolbar {
     display: none !important;
   }
+
+  /* ========================================
+     Activity Page (aktivitetforside2.aspx) Styles
+     ======================================== */
+
+  /* Reset cursor for activity header title (cluetip sets cursor: help) */
+  #s_m_Content_Content_tocAndToolbar_actHeader .s2skemabrik {
+    cursor: default !important;
+  }
+
+  /* Activity note textarea - remove native tooltip and hover effects */
+  #s_m_Content_Content_tocAndToolbar_ActNoteTB_tb {
+    background-color: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    cursor: default !important;
+    resize: none !important;
+  }
+
+  #s_m_Content_Content_tocAndToolbar_ActNoteTB_tb:hover,
+  #s_m_Content_Content_tocAndToolbar_ActNoteTB_tb:focus {
+    background-color: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    outline: none !important;
+  }
+
+  /* Remove native title tooltip by hiding the title attribute effect */
+  #s_m_Content_Content_tocAndToolbar_ActNoteTB_tb[title] {
+    pointer-events: none !important;
+  }
+
+  /* ========================================
+     Schedule Page (SkemaNy.aspx) Styles
+     ======================================== */
+
+  /* Make the schedule grid container full width but contained */
+  #il-original-content .display-grid-skemany {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+
+  /* Schedule print area - full width but contained */
+  #il-original-content [id$="skemaprintarea"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Make the schedule table fill available space */
+  #il-original-content .s2skema {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+  /* Constrain the inner container in the first column to match colgroup */
+  #il-original-content .s2skema td:first-child > .s2skemabrikcontainer {
+    width: 100% !important;
+  }
+
+  /* Make the schedule brick containers fill available space */
+  #il-original-content .s2skema td[data-date] > .s2skemabrikcontainer {
+    width: 100% !important;
+  }
+
+  /* Adjust schedule bricks to fill their container */
+  #il-original-content .s2skema .s2skemabrik {
+    width: calc(100% - 1.1em) !important;
+    max-width: calc(100% - 1.1em) !important;
+    cursor: pointer !important;
+  }
+
+  /* Handle overlapping bricks (half-width) */
+  #il-original-content .s2skema .s2skemabrik[style*="width:6.73em"] {
+    width: calc(50% - 0.8em) !important;
+    max-width: calc(50% - 0.8em) !important;
+  }
+
+  /* Content table full width on schedule pages */
+  #il-original-content #contenttable {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Highlight today's column - solid background (amber/orange tint) */
+  #il-original-content .s2skema td[data-date].is-today {
+    background-color: rgba(251, 191, 36, 0.1) !important;
+  }
+
+  /* Make all child elements transparent so column background shows through */
+  #il-original-content .s2skema td[data-date].is-today > .s2skemabrikcontainer,
+  #il-original-content .s2skema td[data-date].is-today .s2module-bg {
+    background-color: transparent !important;
+  }
+
+  /* Info header row today highlight */
+  #il-original-content .s2skema .s2infoHeader.is-today {
+    background-color: rgba(251, 191, 36, 0.1) !important;
+  }
+
+  /* Today's header styling */
+  #il-original-content .s2skema .s2dayHeader td.is-today {
+    background-color: rgb(245, 158, 11) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 0.375rem 0.375rem 0 0 !important;
+  }
+
+  /* Current time indicator */
+  #il-time-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgb(239, 68, 68); /* red-500 */
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  #il-time-indicator .il-time-dot {
+    position: absolute;
+    left: -4px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    background: rgb(239, 68, 68);
+    border-radius: 50%;
+  }
 }

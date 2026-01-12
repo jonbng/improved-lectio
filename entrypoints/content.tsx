@@ -198,8 +198,151 @@ function initLayout() {
       // Set up title observer for dynamic updates (e.g., unread message count)
       observeTitleChanges();
 
+      // Set up schedule table column widths and highlight today
+      injectScheduleColgroup();
+      highlightTodayInSchedule();
+      injectCurrentTimeIndicator();
+
+      // Remove redundant tooltip on activity page title
+      removeActivityTitleTooltip();
+
       console.log('[BetterLectio] Dashboard layout injected');
     }
+  });
+}
+
+function removeActivityTitleTooltip() {
+  // On activity pages, the title has a tooltip that duplicates all info already shown on page
+  const activityHeader = document.getElementById('s_m_Content_Content_tocAndToolbar_actHeader');
+  if (!activityHeader) return;
+
+  const tooltipElement = activityHeader.querySelector('[data-tooltip]');
+  if (tooltipElement) {
+    tooltipElement.removeAttribute('data-tooltip');
+  }
+
+  // Remove native browser tooltip from activity note textarea
+  const activityNote = document.getElementById('s_m_Content_Content_tocAndToolbar_ActNoteTB_tb');
+  if (activityNote) {
+    activityNote.removeAttribute('title');
+  }
+}
+
+function highlightTodayInSchedule() {
+  const today = new Date();
+  const isoDate = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+  // Find all cells with today's date and mark them
+  const todayCells = document.querySelectorAll(`.s2skema td[data-date="${isoDate}"]`);
+  if (todayCells.length === 0) return;
+
+  todayCells.forEach(td => {
+    td.classList.add('is-today');
+
+    // Find the column index to highlight the header too
+    const cellIndex = (td as HTMLTableCellElement).cellIndex;
+    const table = td.closest('table');
+    if (!table) return;
+
+    // Find and mark the day header cell in the same column
+    const headerRow = table.querySelector('tr.s2dayHeader');
+    if (headerRow) {
+      const headerCell = headerRow.children[cellIndex] as HTMLTableCellElement;
+      if (headerCell) {
+        headerCell.classList.add('is-today');
+        // Change text to "I dag" with the date
+        const dateMatch = headerCell.textContent?.match(/\((\d+\/\d+)\)/);
+        if (dateMatch) {
+          headerCell.textContent = `I dag (${dateMatch[1]})`;
+        }
+      }
+    }
+
+    // Also mark the info header cell (row with announcements)
+    const infoHeaderRow = table.querySelector('tr:has(.s2infoHeader)');
+    if (infoHeaderRow) {
+      const infoCell = infoHeaderRow.children[cellIndex] as HTMLTableCellElement;
+      if (infoCell) {
+        infoCell.classList.add('is-today');
+      }
+    }
+  });
+}
+
+function injectCurrentTimeIndicator() {
+  const today = new Date();
+  const isoDate = today.toISOString().split('T')[0];
+  const todayCell = document.querySelector(`.s2skema td[data-date="${isoDate}"]`);
+  if (!todayCell) return;
+
+  const container = todayCell.querySelector('.s2skemabrikcontainer');
+  if (!container) return;
+
+  // Create the time indicator line
+  const indicator = document.createElement('div');
+  indicator.id = 'il-time-indicator';
+  indicator.innerHTML = '<div class="il-time-dot"></div>';
+  container.appendChild(indicator);
+
+  // Update position immediately and every minute
+  updateTimeIndicatorPosition();
+  setInterval(updateTimeIndicatorPosition, 60000);
+}
+
+function updateTimeIndicatorPosition() {
+  const indicator = document.getElementById('il-time-indicator');
+  if (!indicator) return;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // Schedule runs from 8:10 (490 min) to 20:00 (1200 min)
+  const startMinutes = 490;
+  const endMinutes = 1200;
+
+  // Hide if outside schedule hours
+  if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
+    indicator.style.display = 'none';
+    return;
+  }
+
+  // Calculate position using linear mapping
+  // 8:10 (490 min) -> 0.636em, 20:00 (1200 min) -> 45.818em
+  // Rate: (45.818 - 0.636) / (1200 - 490) = 0.0636 em/min
+  const topEm = 0.636 + (currentMinutes - startMinutes) * 0.0636;
+
+  indicator.style.display = '';
+  indicator.style.top = `${topEm}em`;
+}
+
+function injectScheduleColgroup() {
+  const tables = document.querySelectorAll('.s2skema');
+  tables.forEach(table => {
+    // Skip if colgroup already exists
+    if (table.querySelector('colgroup')) return;
+
+    // Count day columns (cells with data-date attribute in content row)
+    const contentRow = table.querySelector('tr:has(td[data-date])');
+    if (!contentRow) return;
+
+    const dayColumns = contentRow.querySelectorAll('td[data-date]').length;
+
+    // Create colgroup with proper widths
+    const colgroup = document.createElement('colgroup');
+
+    // First column (module times) - fixed narrow width
+    const firstCol = document.createElement('col');
+    firstCol.style.width = '7.5em';
+    colgroup.appendChild(firstCol);
+
+    // Day columns - equal distribution of remaining space
+    for (let i = 0; i < dayColumns; i++) {
+      const col = document.createElement('col');
+      colgroup.appendChild(col);
+    }
+
+    // Insert colgroup at the beginning of the table
+    table.insertBefore(colgroup, table.firstChild);
   });
 }
 
