@@ -28,6 +28,7 @@ import {
   LayoutGrid,
   FileSearch,
   BookMarked,
+  Settings,
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
@@ -53,6 +54,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { clearLoginState } from '@/lib/profile-cache';
+import { SettingsModal } from './SettingsModal';
 
 function getSchoolIdFromUrl(): string {
   const match = window.location.pathname.match(/\/lectio\/(\d+)\//);
@@ -207,6 +209,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [findSkemaOpen, setFindSkemaOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Get logo URL at render time when browser context is available
@@ -445,6 +448,19 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   </a>
                 </div>
                 <div className="p-1 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettingsOpen(true);
+                      setMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                  >
+                    <Settings className="size-4" />
+                    Indstillinger
+                  </button>
+                </div>
+                <div className="p-1 border-t border-border">
                   <a
                     href={`${baseUrl}/logout.aspx`}
                     onClick={(e) => {
@@ -506,6 +522,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           />
         </div>
       )}
+
+      {/* Settings modal */}
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </Sidebar>
   );
 }
