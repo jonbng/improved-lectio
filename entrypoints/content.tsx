@@ -395,7 +395,86 @@ function injectForsideGreeting() {
   // Render the greeting component
   render(<ForsideGreeting />, greetingContainer);
 
+  // Apply masonry layout to dashboard cards
+  applyMasonryLayout();
+
   console.log('[BetterLectio] Forside greeting injected');
+}
+
+function applyMasonryLayout() {
+  // Delay to ensure CSS has been applied and container has proper width
+  setTimeout(() => {
+    const container = document.querySelector('#il-original-content .ls-std-island-layout-ltr') as HTMLElement;
+    if (!container) return;
+
+    // Get all cards (they're inside column wrappers with display: contents)
+    const cards = Array.from(container.querySelectorAll('.lf-island')) as HTMLElement[];
+    if (cards.length === 0) return;
+
+    const layoutMasonry = () => {
+      // Use the scroll container width minus padding (1.5rem * 2 = 48px)
+      const scrollContainer = document.getElementById('il-lectio-content');
+      const containerWidth = scrollContainer ? scrollContainer.clientWidth - 48 : container.clientWidth;
+      const gap = 16; // 1rem
+      const minCardWidth = 280; // Minimum card width before reducing columns
+
+      // Calculate number of columns based on container width
+      let numColumns = Math.floor((containerWidth + gap) / (minCardWidth + gap));
+      numColumns = Math.max(1, Math.min(numColumns, 3)); // Between 1 and 3 columns
+
+      // For very narrow screens, force single column if width is less than 600px
+      if (containerWidth < 600) {
+        numColumns = 1;
+      } else if (containerWidth < 900) {
+        numColumns = Math.min(numColumns, 2);
+      }
+
+      const cardWidth = (containerWidth - (numColumns - 1) * gap) / numColumns;
+
+      // Set container width explicitly to match the calculated width
+      // Use setProperty with !important to override any CSS rules
+      container.style.setProperty('width', `${containerWidth}px`, 'important');
+
+      // Track the height of each column
+      const columnHeights = new Array(numColumns).fill(0);
+
+      cards.forEach((card) => {
+        // Find the shortest column
+        const shortestColumn = columnHeights.indexOf(Math.min(...columnHeights));
+
+        // Position the card
+        card.style.position = 'absolute';
+        card.style.width = `${cardWidth}px`;
+        card.style.left = `${shortestColumn * (cardWidth + gap)}px`;
+        card.style.top = `${columnHeights[shortestColumn]}px`;
+
+        // Update the column height
+        columnHeights[shortestColumn] += card.offsetHeight + gap;
+      });
+
+      // Set container height to tallest column
+      container.style.setProperty('height', `${Math.max(...columnHeights)}px`, 'important');
+
+      console.log('[BetterLectio] Masonry layout:', { containerWidth, numColumns, cardWidth, scrollContainerWidth: scrollContainer?.clientWidth });
+    };
+
+    // Make container relative for absolute positioning
+    container.style.position = 'relative';
+
+    // Initial layout after a frame to ensure styles are applied
+    requestAnimationFrame(() => {
+      layoutMasonry();
+    });
+
+    // Relayout on resize - observe the scroll container for width changes
+    const scrollContainer = document.getElementById('il-lectio-content');
+    if (scrollContainer) {
+      const resizeObserver = new ResizeObserver(() => {
+        layoutMasonry();
+      });
+      resizeObserver.observe(scrollContainer);
+    }
+  }, 50);
 }
 
 function injectViewingScheduleHeader(schoolId: string) {
