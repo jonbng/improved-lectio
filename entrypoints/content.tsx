@@ -17,6 +17,13 @@ export default defineContentScript({
   main() {
     console.log('[BetterLectio] Content script loaded');
 
+    // Listen for messages from background script (e.g., extension icon click)
+    browser.runtime.onMessage.addListener((message) => {
+      if (message.action === 'openSettings') {
+        window.dispatchEvent(new CustomEvent('betterlectio:openSettings'));
+      }
+    });
+
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initLayout);

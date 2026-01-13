@@ -251,6 +251,15 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     }
   }, [imageEnlarged]);
 
+  // Listen for custom event to open settings (triggered by extension icon click)
+  useEffect(() => {
+    function handleOpenSettings() {
+      setSettingsOpen(true);
+    }
+    window.addEventListener('betterlectio:openSettings', handleOpenSettings);
+    return () => window.removeEventListener('betterlectio:openSettings', handleOpenSettings);
+  }, []);
+
   const isActive = (page: string) => {
     const pageLower = page.toLowerCase();
     if (currentPage === pageLower) return true;

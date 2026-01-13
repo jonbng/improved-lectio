@@ -10,6 +10,9 @@ export default defineConfig({
     version: '0.0.4',
     author: 'Jonathan Bangert <jonathan@bangert.dk>' as any,
     homepage_url: 'https://github.com/jonbng/betterlectio',
+    action: {
+      default_title: 'BetterLectio',
+    },
     permissions: ['storage'],
     web_accessible_resources: [
       {
