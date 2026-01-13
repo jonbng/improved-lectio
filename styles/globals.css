@@ -699,27 +699,14 @@
     box-sizing: border-box !important;
   }
 
-  /* Dashboard layout - CSS columns for masonry-like effect */
+  /* Dashboard layout - flexbox for equal sizing */
   body.il-forside #il-original-content .ls-std-island-layout-ltr {
-    display: block !important;
-    column-count: 3 !important;
-    column-gap: 1rem !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
     padding: 0 1.5rem !important;
     width: 100% !important;
     box-sizing: border-box !important;
-  }
-
-  /* Responsive breakpoints */
-  @media (max-width: 1200px) {
-    body.il-forside #il-original-content .ls-std-island-layout-ltr {
-      column-count: 2 !important;
-    }
-  }
-
-  @media (max-width: 800px) {
-    body.il-forside #il-original-content .ls-std-island-layout-ltr {
-      column-count: 1 !important;
-    }
   }
 
   /* Remove the column wrappers */
@@ -729,9 +716,33 @@
 
   /* Improve island styling on forside */
   body.il-forside #il-original-content .lf-island {
-    margin: 0 0 1rem 0 !important;
-    break-inside: avoid !important;
-    height: fit-content !important;
+    flex: 1 1 300px !important; /* Grow, shrink, base 300px */
+    max-width: calc(50% - 0.5rem) !important; /* Max 2 per row */
+    margin: 0 !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* On wider screens, allow 3 columns */
+  @media (min-width: 1100px) {
+    body.il-forside #il-original-content .lf-island {
+      max-width: calc(33.333% - 0.67rem) !important;
+    }
+  }
+
+  /* On narrow screens, single column */
+  @media (max-width: 700px) {
+    body.il-forside #il-original-content .lf-island {
+      max-width: 100% !important;
+      flex-basis: 100% !important;
+    }
+  }
+
+  /* Prevent content from forcing card wider */
+  body.il-forside #il-original-content .lf-island * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
   }
 
   /* Remove padding from island content - let internal elements handle their own spacing */
