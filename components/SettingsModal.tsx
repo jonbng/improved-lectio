@@ -52,26 +52,46 @@ const VERSION_STORAGE_KEY = "betterlectio_version_info";
 
 interface VersionInfo {
   version: string;
-  installedAt: string;
+  firstInstalledAt: string;
+  lastUpdatedAt: string;
 }
 
 function getVersionInfo(currentVersion: string): VersionInfo {
   try {
     const stored = localStorage.getItem(VERSION_STORAGE_KEY);
     if (stored) {
-      const info: VersionInfo = JSON.parse(stored);
+      const info = JSON.parse(stored);
+      // Migrate from old format if needed
+      const firstInstalledAt = info.firstInstalledAt || info.installedAt || new Date().toISOString();
+
       if (info.version === currentVersion) {
-        return info;
+        // Same version, return existing info
+        return {
+          version: currentVersion,
+          firstInstalledAt,
+          lastUpdatedAt: info.lastUpdatedAt || firstInstalledAt,
+        };
       }
+
+      // Version changed - update lastUpdatedAt but keep firstInstalledAt
+      const updatedInfo: VersionInfo = {
+        version: currentVersion,
+        firstInstalledAt,
+        lastUpdatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(VERSION_STORAGE_KEY, JSON.stringify(updatedInfo));
+      return updatedInfo;
     }
   } catch {
     // Ignore parse errors
   }
 
-  // New version or first install
+  // First install
+  const now = new Date().toISOString();
   const newInfo: VersionInfo = {
     version: currentVersion,
-    installedAt: new Date().toISOString(),
+    firstInstalledAt: now,
+    lastUpdatedAt: now,
   };
   localStorage.setItem(VERSION_STORAGE_KEY, JSON.stringify(newInfo));
   return newInfo;
@@ -181,15 +201,15 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         return (
           <div className="space-y-8">
             {/* Hero section with logo and name */}
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-2">
               <img
                 src={logoUrl}
                 alt="BetterLectio"
-                width={40}
-                height={40}
-                className="size-10 shrink-0"
+                width={64}
+                height={64}
+                className="size-16 shrink-0"
               />
-              <h1 className="text-2xl font-semibold text-black">
+              <h1 className="text-3xl! font-bold! text-black!">
                 BetterLectio
               </h1>
             </div>
@@ -209,17 +229,32 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </div>
 
               {versionInfo && (
-                <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center size-8 rounded-md bg-primary/10">
-                      <Calendar className="size-4 text-primary" />
+                <>
+                  <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center size-8 rounded-md bg-primary/10">
+                        <Calendar className="size-4 text-primary" />
+                      </div>
+                      <span className="text-sm font-medium">Først installeret</span>
                     </div>
-                    <span className="text-sm font-medium">Installeret</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(versionInfo.firstInstalledAt)}
+                    </span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    {formatDate(versionInfo.installedAt)}
-                  </span>
-                </div>
+                  {versionInfo.firstInstalledAt !== versionInfo.lastUpdatedAt && (
+                    <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center size-8 rounded-md bg-primary/10">
+                          <Calendar className="size-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-medium">Sidst opdateret</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(versionInfo.lastUpdatedAt)}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -229,7 +264,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 href="https://chromewebstore.google.com/detail/betterlectio/dkfapbjhgiepdijkpfabekbnepiomahj"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-black! hover:bg-accent cursor-pointer transition-colors no-underline"
               >
                 <Chrome className="size-4" />
                 Chrome Web Store
@@ -239,7 +274,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 href="https://github.com/jonbng/betterlectio"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent cursor-pointer transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-black! hover:bg-accent cursor-pointer transition-colors no-underline"
               >
                 <Github className="size-4" />
                 GitHub
@@ -249,7 +284,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 href="https://github.com/jonbng/betterlectio/issues"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent cursor-pointer transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-black! hover:bg-accent cursor-pointer transition-colors no-underline"
               >
                 <Bug className="size-4" />
                 Rapporter problem
