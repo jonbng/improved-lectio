@@ -36,15 +36,17 @@ async function checkAndRedirectIfLoggedIn(): Promise<boolean> {
       );
 
       // Verify session is actually valid by fetching a page that requires auth
+      // Use GET instead of HEAD - some servers handle HEAD differently
       const scheduleUrl = new URL(lastSchool.url.replace("default.aspx", "skemany.aspx"), window.location.origin).href;
 
       try {
         const response = await fetch(scheduleUrl, {
-          method: 'HEAD',
-          credentials: 'include'
+          method: 'GET',
+          credentials: 'include',
+          redirect: 'follow'
         });
 
-        // If we get redirected to login.aspx, session is invalid
+        // Check if we ended up on a login page
         if (response.url.includes('login.aspx')) {
           console.log("[BetterLectio] Session expired, showing login page");
           clearLoginState();
@@ -59,6 +61,8 @@ async function checkAndRedirectIfLoggedIn(): Promise<boolean> {
         window.location.href = scheduleUrl;
         return true;
       } catch (err) {
+        // Network error - don't clear state, just show login page
+        // User can manually try to access their school
         console.log("[BetterLectio] Failed to verify session:", err);
         return false;
       }
