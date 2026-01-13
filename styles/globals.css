@@ -711,7 +711,21 @@
     cursor: pointer !important;
   }
 
-  /* Handle overlapping bricks (half-width) */
+  /* Handle overlapping bricks - detect by left position indicating right-side placement */
+  /* Right-side brick (positioned after ~5em means it's sharing space) */
+  #il-original-content .s2skema .s2skemabrik[style*="left:5."] {
+    width: calc(50% - 0.8em) !important;
+    max-width: calc(50% - 0.8em) !important;
+    left: calc(50% + 0.3em) !important;
+  }
+
+  /* Left-side brick when there's overlap (narrow width ~4em instead of ~9em) */
+  #il-original-content .s2skema .s2skemabrik[style*="width:4."] {
+    width: calc(50% - 0.8em) !important;
+    max-width: calc(50% - 0.8em) !important;
+  }
+
+  /* Also catch the old width pattern for other container sizes */
   #il-original-content .s2skema .s2skemabrik[style*="width:6.73em"] {
     width: calc(50% - 0.8em) !important;
     max-width: calc(50% - 0.8em) !important;
@@ -767,4 +781,17 @@
     background: rgb(239, 68, 68);
     border-radius: 50%;
   }
+
+  /* Time label - commented out, overlaps with schedule
+  #il-time-indicator .il-time-label {
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 600;
+    color: rgb(239, 68, 68);
+    white-space: nowrap;
+  }
+  */
 }

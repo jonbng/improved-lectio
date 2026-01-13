@@ -273,6 +273,7 @@ function injectCurrentTimeIndicator() {
   // Create the time indicator line
   const indicator = document.createElement('div');
   indicator.id = 'il-time-indicator';
+  // indicator.innerHTML = '<span class="il-time-label"></span><div class="il-time-dot"></div>';
   indicator.innerHTML = '<div class="il-time-dot"></div>';
   container.appendChild(indicator);
 
@@ -305,6 +306,14 @@ function updateTimeIndicatorPosition() {
 
   indicator.style.display = '';
   indicator.style.top = `${topEm}em`;
+
+  // Update time label (commented out - overlaps with schedule)
+  // const timeLabel = indicator.querySelector('.il-time-label');
+  // if (timeLabel) {
+  //   const hours = now.getHours().toString().padStart(2, '0');
+  //   const minutes = now.getMinutes().toString().padStart(2, '0');
+  //   timeLabel.textContent = `${hours}:${minutes}`;
+  // }
 }
 
 function injectScheduleColgroup() {
