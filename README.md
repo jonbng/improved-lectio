@@ -104,6 +104,10 @@ bun run zip:firefox  # Firefox
 | Firefox | Supported (Manifest V2) |
 | Edge | Should work (untested) |
 
+## Acknowledgements
+
+Name inspired by [BetterLectio](https://github.com/BetterLectio).
+
 ## License
 
 MIT
