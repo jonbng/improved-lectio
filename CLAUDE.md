@@ -16,6 +16,7 @@ Browser extension that modernizes [Lectio](https://www.lectio.dk/), a Danish sch
 - `components/AppSidebar.tsx` - Custom sidebar navigation with collapsible sections
 - `components/StudentSearch.tsx` - Universal search for students, teachers, rooms, etc.
 - `components/ViewingScheduleHeader.tsx` - Header shown when viewing another person's schedule
+- `components/ForsideGreeting.tsx` - Dynamic greeting header for the forside page
 - `lib/preload.ts` - Speculation Rules API & hover prefetching
 - `lib/profile-cache.ts` - Caches user profile data for cross-page persistence
 - `styles/globals.css` - Main styles, hides original Lectio UI, page-specific styling
@@ -46,6 +47,7 @@ Note: `window.location.href = "/relative/path"` and `<a href="/path">` work fine
 - **Profile Caching** - User profile persists when viewing other students' schedules
 - **Viewing Header** - Shows whose schedule you're viewing with their picture
 - **Profile Picture Enlargement** - Click on profile pictures to view full size
+- **Forside Redesign** - Modern greeting with time-based message, responsive masonry card layout
 - **Page-Specific Styling** - Messages page two-column layout, UV beskrivelser grid
 - **Print Page Support** - Sidebar hidden on print pages
 

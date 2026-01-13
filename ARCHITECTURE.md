@@ -63,6 +63,7 @@ betterlectio/
 │   ├── AppSidebar.tsx        # Main sidebar navigation
 │   ├── StudentSearch.tsx     # Universal search component
 │   ├── ViewingScheduleHeader.tsx  # Header when viewing others
+│   ├── ForsideGreeting.tsx   # Dynamic greeting for forside page
 │   └── ui/                   # shadcn/ui components
 │       ├── avatar.tsx
 │       ├── button.tsx
@@ -234,7 +235,18 @@ Features:
 - Color-coded badge (Elev/Lærer)
 - Only shown when viewing another student/teacher's schedule
 
-### 6. Profile Cache (`lib/profile-cache.ts`)
+### 6. Forside Greeting (`components/ForsideGreeting.tsx`)
+
+**Purpose:** Dynamic greeting header for the forside (home) page
+
+Features:
+- Time-based greeting (God morgen/formiddag/eftermiddag/aften)
+- Displays user's first name from cached profile
+- Live clock with Danish locale formatting
+- Formatted date display (weekday, day, month)
+- Large, prominent typography (text-8xl greeting, text-5xl time)
+
+### 7. Profile Cache (`lib/profile-cache.ts`)
 
 **Purpose:** Persist user profile data across pages
 
@@ -245,7 +257,7 @@ Features:
 - Prevents caching viewed student's data as logged-in user's data
 - Enables profile display when viewing other students' schedules
 
-### 7. Preload System (`lib/preload.ts`)
+### 8. Preload System (`lib/preload.ts`)
 
 **Purpose:** Performance optimization through speculative loading
 
@@ -266,7 +278,7 @@ Implementation:
 }
 ```
 
-### 8. Global Styles (`styles/globals.css`)
+### 9. Global Styles (`styles/globals.css`)
 
 **Purpose:** Complete visual overhaul
 
@@ -275,6 +287,7 @@ Key styling areas:
 - Hides original Lectio navigation, header, footer
 - Messages page two-column layout with folder tree
 - UV beskrivelser page - converts table to modern grid of pills
+- Forside page - masonry card layout, hidden island headers, custom greeting
 - Sidebar positioning (fixed, 16rem width)
 - Geist font application
 - Smooth transitions and animations
@@ -401,6 +414,13 @@ HTML snapshots of Lectio pages before extension modification:
 - Type-adaptive search (elev, lærer, lokale, hold, etc.)
 - Recent searches with localStorage persistence
 - "Viewing schedule" header when on another person's page
+- Forside page redesign:
+  - Dynamic greeting header (God morgen/formiddag/eftermiddag/aften + first name)
+  - Live clock and date display
+  - Responsive masonry card layout with JS positioning
+  - Hidden redundant island headers and mobile app link
+  - Hidden time column in messages section
+  - Hidden empty th elements in "Hold og grupper" section
 - UV beskrivelser page styling (grid of pills)
 - Print page support (sidebar hidden)
 - Dark mode CSS variables (ready for implementation)
