@@ -958,4 +958,11 @@
     white-space: nowrap;
   }
   */
+
+  /* Hide "hold og grupper" section at bottom of schedule page */
+  #il-original-content #s_m_Content_Content_holdElementLinkList,
+  #il-original-content label.ls-label-block:has(+ #s_m_Content_Content_holdElementLinkList),
+  #il-original-content #contenttable > label.ls-label-block {
+    display: none !important;
+  }
 }
