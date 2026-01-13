@@ -767,11 +767,6 @@
     width: 100% !important;
   }
 
-  /* Remove padding from island content - let internal elements handle their own spacing */
-  body.il-forside #il-original-content .islandContent {
-    padding: 0 !important;
-  }
-
   /* Dashboard link headers (like "Beskeder") */
   body.il-forside #il-original-content .dashboardLinkHeader {
     display: flex !important;
@@ -971,7 +966,12 @@
      ======================================== */
 
   /* Remove padding from main island section */
-  #il-original-content section.lf-island.largeBlock.defaultBlockHeight.ls-island-elevated {
+  /* #il-original-content section.lf-island.largeBlock.defaultBlockHeight.ls-island-elevated {
+    padding: 0 !important;
+  } */
+
+  /* Remove padding from island elevated section */
+  #il-original-content .ls-island-elevated {
     padding: 0 !important;
   }
 }
