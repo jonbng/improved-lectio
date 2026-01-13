@@ -671,6 +671,132 @@
   }
 
   /* ========================================
+     Forside Page (forside.aspx) Styles
+     ======================================== */
+
+  /* Hide island headers on forside - they're redundant with our clean design */
+  body.il-forside #il-original-content .islandHeaderContainer {
+    display: none !important;
+  }
+
+  /* Hide mobile app promotion link */
+  body.il-forside #il-original-content #s_m_Content_Content_LectioPaaMobilenBtn {
+    display: none !important;
+  }
+
+  /* Also hide the parent container for the mobile app link */
+  body.il-forside #il-original-content .ls-std-rowblock.ls-hidden-smallscreen:has(#s_m_Content_Content_LectioPaaMobilenBtn) {
+    display: none !important;
+  }
+
+  /* Remove all width constraints on forside */
+  body.il-forside #il-original-content .ls-fitcontent,
+  body.il-forside #il-original-content .ls-dashboard,
+  body.il-forside #il-original-content .ls-content,
+  body.il-forside #il-original-content #contenttable {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Dashboard layout - CSS columns for masonry-like effect */
+  body.il-forside #il-original-content .ls-std-island-layout-ltr {
+    display: block !important;
+    column-count: 3 !important;
+    column-gap: 1rem !important;
+    padding: 0 1.5rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Responsive breakpoints */
+  @media (max-width: 1200px) {
+    body.il-forside #il-original-content .ls-std-island-layout-ltr {
+      column-count: 2 !important;
+    }
+  }
+
+  @media (max-width: 800px) {
+    body.il-forside #il-original-content .ls-std-island-layout-ltr {
+      column-count: 1 !important;
+    }
+  }
+
+  /* Remove the column wrappers */
+  body.il-forside #il-original-content .ls-std-island-layout-col {
+    display: contents !important;
+  }
+
+  /* Improve island styling on forside */
+  body.il-forside #il-original-content .lf-island {
+    margin: 0 0 1rem 0 !important;
+    break-inside: avoid !important;
+    height: fit-content !important;
+  }
+
+  /* Remove padding from island content - let internal elements handle their own spacing */
+  body.il-forside #il-original-content .islandContent {
+    padding: 0 !important;
+  }
+
+  /* Dashboard link headers (like "Beskeder") */
+  body.il-forside #il-original-content .dashboardLinkHeader {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 1rem 1.25rem 1.25rem 1.25rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: transparent !important;
+  }
+
+  body.il-forside #il-original-content .dashboardLinkHeader a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    text-decoration: none !important;
+  }
+
+  body.il-forside #il-original-content .dashboardLinkHeaderText {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: var(--foreground) !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  body.il-forside #il-original-content .dashboardLinkHeaderInfoText {
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    color: var(--primary-foreground) !important;
+    background: var(--primary) !important;
+    padding: 0.25rem 0.625rem !important;
+    border-radius: 9999px !important;
+  }
+
+  /* Hide empty info text */
+  body.il-forside #il-original-content .dashboardLinkHeaderInfoText:empty {
+    display: none !important;
+  }
+
+  /* Dashboard tables */
+  body.il-forside #il-original-content table.dashboard {
+    width: 100% !important;
+  }
+
+  body.il-forside #il-original-content table.dashboard td {
+    padding: 0.5rem 1rem !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  body.il-forside #il-original-content table.dashboard tr:last-child td {
+    border-bottom: none !important;
+  }
+
+  /* Hide time column from messages section on forside */
+  body.il-forside #il-original-content #s_m_Content_Content_BeskederInfo .timeCol {
+    display: none !important;
+  }
+
+  /* ========================================
      Schedule Page (SkemaNy.aspx) Styles
      ======================================== */
 

@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { AppSidebar } from '@/components/AppSidebar';
 import { StudentSearch } from '@/components/StudentSearch';
 import { ViewingScheduleHeader } from '@/components/ViewingScheduleHeader';
+import { ForsideGreeting } from '@/components/ForsideGreeting';
 import {
   SidebarProvider,
   SidebarInset,
@@ -179,6 +180,11 @@ function initLayout() {
         // Inject student search on FindSkema page
         if (window.location.pathname.toLowerCase().includes('findskema.aspx')) {
           injectStudentSearch(schoolId);
+        }
+
+        // Inject greeting on forside page
+        if (window.location.pathname.toLowerCase().includes('forside.aspx')) {
+          injectForsideGreeting();
         }
 
         // Inject "viewing schedule" header when looking at someone else's schedule
@@ -369,6 +375,27 @@ function injectStudentSearch(schoolId: string) {
   render(<StudentSearch schoolId={schoolId} searchType={searchType || 'all'} />, searchContainer);
 
   console.log('[BetterLectio] Student search injected with type:', searchType || 'all');
+}
+
+function injectForsideGreeting() {
+  // Add body class for forside-specific CSS
+  document.body.classList.add('il-forside');
+
+  // Find the content container
+  const contentContainer = document.getElementById('il-lectio-content');
+  if (!contentContainer) return;
+
+  // Create container for the greeting
+  const greetingContainer = document.createElement('div');
+  greetingContainer.id = 'il-forside-greeting';
+
+  // Insert at the beginning of the content container
+  contentContainer.insertBefore(greetingContainer, contentContainer.firstChild);
+
+  // Render the greeting component
+  render(<ForsideGreeting />, greetingContainer);
+
+  console.log('[BetterLectio] Forside greeting injected');
 }
 
 function injectViewingScheduleHeader(schoolId: string) {
