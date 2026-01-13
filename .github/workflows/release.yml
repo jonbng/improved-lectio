@@ -83,36 +83,26 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build Chrome extension
-        run: bun run build
-
-      - name: Build Firefox extension
-        run: bun run build:firefox
-
-      - name: Package extensions
+      - name: Build and zip extensions
         run: |
-          cd .output
-          zip -r chrome-extension.zip chrome-mv3
-          zip -r firefox-extension.zip firefox-mv2
+          bun run zip
+          bun run zip:firefox
 
-      - name: Upload to Chrome Web Store
+      - name: Submit to stores
         continue-on-error: true
         run: |
-          npx --yes chrome-webstore-upload-cli upload \
-            --source .output/chrome-extension.zip \
-            --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
-            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
-            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
-            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }}
-
-      - name: Upload to Firefox Add-ons (AMO)
-        continue-on-error: true
-        run: |
-          cd .output/firefox-mv2
-          npx --yes web-ext sign \
-            --channel listed \
-            --api-key ${{ secrets.AMO_API_KEY }} \
-            --api-secret ${{ secrets.AMO_API_SECRET }}
+          bunx wxt submit \
+            --chrome-zip .output/*-chrome.zip \
+            --firefox-zip .output/*-firefox.zip \
+            --firefox-sources-zip .output/*-sources.zip
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.AMO_API_KEY }}
+          FIREFOX_JWT_SECRET: ${{ secrets.AMO_API_SECRET }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -123,8 +113,8 @@ jobs:
             ## BetterLectio v${{ steps.version.outputs.version }}
 
             ### Installation
-            - **Chrome**: Install from [Chrome Web Store](https://chrome.google.com/webstore) or download `chrome-extension.zip`
-            - **Firefox**: Install from [Firefox Add-ons](https://addons.mozilla.org) or download `firefox-extension.zip`
+            - **Chrome**: Install from [Chrome Web Store](https://chrome.google.com/webstore) or download the Chrome zip
+            - **Firefox**: Install from [Firefox Add-ons](https://addons.mozilla.org) or download the Firefox zip
 
             ### Manual Installation
             1. Download the appropriate zip file for your browser
@@ -132,6 +122,6 @@ jobs:
             3. Chrome: Go to `chrome://extensions`, enable Developer Mode, click "Load unpacked"
             4. Firefox: Go to `about:debugging`, click "Load Temporary Add-on"
           files: |
-            .output/chrome-extension.zip
-            .output/firefox-extension.zip
+            .output/*-chrome.zip
+            .output/*-firefox.zip
           generate_release_notes: true
