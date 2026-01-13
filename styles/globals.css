@@ -456,8 +456,21 @@
     background: var(--accent) !important;
   }
 
+  /* Unread message styling */
   #il-original-content .ls-table-layout5 tr.unread td {
-    font-weight: 500 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Blue dot indicator before message title for unread messages */
+  #il-original-content .ls-table-layout5 tr.unread td .buttonlink a[id$="_ch"]::before {
+    content: "" !important;
+    display: inline-block !important;
+    width: 8px !important;
+    height: 8px !important;
+    background: hsl(217 91% 60%) !important;
+    border-radius: 50% !important;
+    margin-right: 8px !important;
+    vertical-align: middle !important;
   }
 
   /* Message toolbar */
