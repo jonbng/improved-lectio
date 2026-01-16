@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { AppSidebar } from '@/components/AppSidebar';
-import { StudentSearch } from '@/components/StudentSearch';
+import { FindSkemaPage } from '@/components/FindSkemaPage';
 import { ViewingScheduleHeader } from '@/components/ViewingScheduleHeader';
 import { ForsideGreeting } from '@/components/ForsideGreeting';
 import {
@@ -184,9 +184,9 @@ function initLayout() {
       if (schoolId) {
         initPreloading(schoolId);
 
-        // Inject student search on FindSkema page
+        // Inject FindSkema page
         if (window.location.pathname.toLowerCase().includes('findskema.aspx')) {
-          injectStudentSearch(schoolId);
+          injectFindSkemaPage(schoolId);
         }
 
         // Inject greeting on forside page
@@ -360,28 +360,29 @@ function injectScheduleColgroup() {
   });
 }
 
-function injectStudentSearch(schoolId: string) {
-  // Find the content area where we want to inject the search
-  const pageHeader = document.querySelector('#m_HeaderContent_pageHeader');
-  if (!pageHeader) return;
+function injectFindSkemaPage(schoolId: string) {
+  // Add body class for FindSkema-specific CSS
+  document.body.classList.add('il-findskema');
+
+  // Find the content container
+  const contentContainer = document.getElementById('il-lectio-content');
+  if (!contentContainer) return;
 
   // Get search type from URL (e.g., ?type=lokale)
   const urlParams = new URLSearchParams(window.location.search);
   const searchType = urlParams.get('type') as 'elev' | 'laerer' | 'stamklasse' | 'lokale' | 'ressource' | 'hold' | 'gruppe' | undefined;
 
-  // Create container for our search
-  const searchContainer = document.createElement('div');
-  searchContainer.id = 'il-student-search';
-  searchContainer.style.padding = '0.4em 0.5em 0 0.5em';
+  // Create container for our FindSkema page
+  const findSkemaContainer = document.createElement('div');
+  findSkemaContainer.id = 'il-findskema-page';
 
-  // Insert after the page header
-  pageHeader.parentNode?.insertBefore(searchContainer, pageHeader.nextSibling);
+  // Insert at the beginning of the content container
+  contentContainer.insertBefore(findSkemaContainer, contentContainer.firstChild);
 
-  // Render the search component with the appropriate type
-  // Default to 'all' (students, teachers, rooms) when no type specified
-  render(<StudentSearch schoolId={schoolId} searchType={searchType || 'all'} />, searchContainer);
+  // Render the FindSkema page component
+  render(<FindSkemaPage schoolId={schoolId} searchType={searchType || 'elev'} />, findSkemaContainer);
 
-  console.log('[BetterLectio] Student search injected with type:', searchType || 'all');
+  console.log('[BetterLectio] FindSkema page injected with type:', searchType || 'elev');
 }
 
 function injectForsideGreeting() {
