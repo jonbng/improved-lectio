@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { X, Clock, Trash2 } from 'lucide-react';
-
-interface SearchItem {
-  name: string;
-  id: string;
-  type: string;
-}
+import {
+  searchItems,
+  createSearchText,
+  type SearchableItem,
+} from '../lib/fuzzy-search';
 
 interface RecentSearch {
   name: string;
@@ -96,10 +95,23 @@ const ITEM_TYPE_CONFIG: Record<string, { label: string; badgeClass: string; urlP
   G: { label: 'Gruppe', badgeClass: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300', urlParam: 'gruppeid' },
 };
 
+// Extract type key from ID - handles both single char (S, T) and two char (HE, GE, RE, RO) prefixes
+function getTypeKeyFromId(id: string): string {
+  if (!id) return 'S';
+  const prefix = id.substring(0, 2);
+  // Map 2-char prefixes to our single-char type keys
+  if (prefix === 'HE') return 'H'; // Hold elements
+  if (prefix === 'GE') return 'G'; // Gruppe elements
+  if (prefix === 'RE' || prefix === 'RO') return 'R'; // Resources
+  if (prefix === 'SC') return 'S'; // Student codes
+  // For other cases, use first char (S, T, K, L)
+  return id.charAt(0);
+}
+
 function getTypeFromId(id: string): string {
-  const prefix = id.charAt(0);
+  const typeKey = getTypeKeyFromId(id);
   for (const [type, config] of Object.entries(TYPE_CONFIG)) {
-    if (config.prefixes.includes(prefix)) {
+    if (config.prefixes.includes(typeKey)) {
       return type;
     }
   }
@@ -149,7 +161,7 @@ interface SearchProps {
 
 export function StudentSearch({ schoolId, searchType = 'all' }: SearchProps) {
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<SearchItem[]>([]);
+  const [items, setItems] = useState<SearchableItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
@@ -200,18 +212,28 @@ export function StudentSearch({ schoolId, searchType = 'all' }: SearchProps) {
         const data = await response.json();
 
         // Parse items - filter based on searchType prefixes
+        // API response format: [title, key, flags, group, cssClass, _que, isContextCard, shortName, longName]
         const allowedPrefixes = typeConfig.prefixes;
-        const parsed: SearchItem[] = data.items
+        const parsed: SearchableItem[] = data.items
           .filter((item: any[]) => {
             const id = item[1];
             if (!id) return false;
             return allowedPrefixes.some(prefix => id.startsWith(prefix));
           })
-          .map((item: any[]) => ({
-            name: item[0],
-            id: item[1],
-            type: item[1]?.charAt(0) || 'S',
-          }));
+          .map((item: any[]) => {
+            const name = item[0] as string;
+            const id = item[1] as string;
+            const shortName = (item[7] as string | null) || null;
+            const longName = (item[8] as string | null) || null;
+            return {
+              name,
+              id,
+              type: getTypeKeyFromId(id),
+              shortName,
+              longName,
+              searchText: createSearchText(name, shortName, longName),
+            };
+          });
 
         setItems(parsed);
         setLoading(false);
@@ -258,11 +280,14 @@ export function StudentSearch({ schoolId, searchType = 'all' }: SearchProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const filteredItems = query.length >= 2
-    ? items.filter(item =>
-        item.name.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 20)
-    : [];
+  // Create a filter set from the allowed prefixes for this search type
+  const activeFilters = useMemo(() => new Set(typeConfig.prefixes), [typeConfig.prefixes]);
+
+  // Use fuzzy search for better matching
+  const filteredItems = useMemo(() => {
+    const results = searchItems(items, query, activeFilters, 20);
+    return results.map(r => r.item);
+  }, [items, query, activeFilters]);
 
   const handleRemoveRecent = useCallback((e: React.MouseEvent, id: string) => {
     e.stopPropagation();

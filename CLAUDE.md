@@ -1,5 +1,7 @@
 # BetterLectio
 
+!IMPORTANT: Please update @Claude.md and @ARCHITECTURE.md after each big change to reflect changes
+
 @ARHITECTURE.md
 
 Browser extension that modernizes [Lectio](https://www.lectio.dk/), a Danish school management system.
@@ -12,13 +14,19 @@ Browser extension that modernizes [Lectio](https://www.lectio.dk/), a Danish sch
 
 ## Key Files
 - `entrypoints/content.tsx` - Main content script, renders custom UI wrapper
+- `entrypoints/login.content.tsx` - Login page redesign with school selector
 - `entrypoints/hide-flash.content.ts` - Prevents FOUC with skeleton loader
+- `entrypoints/session-block.content.ts` - Blocks session timeout popup
 - `components/AppSidebar.tsx` - Custom sidebar navigation with collapsible sections
-- `components/StudentSearch.tsx` - Universal search for students, teachers, rooms, etc.
-- `components/ViewingScheduleHeader.tsx` - Header shown when viewing another person's schedule
-- `components/ForsideGreeting.tsx` - Dynamic greeting header for the forside page
-- `lib/preload.ts` - Speculation Rules API & hover prefetching
-- `lib/profile-cache.ts` - Caches user profile data for cross-page persistence
+- `components/FindSkemaPage.tsx` - Complete FindSkema redesign with fuzzy search, starred/recents
+- `components/LoginPage.tsx` - School selector with "continue to last school" feature
+- `components/PersonCard.tsx` - Reusable person/entity card with lazy-loaded pictures
+- `components/ViewingScheduleHeader.tsx` - Header when viewing another schedule (with star/back)
+- `components/SettingsModal.tsx` - Settings modal with appearance, notifications, about sections
+- `lib/findskema-storage.ts` - Starred people, recents, and picture cache persistence
+- `lib/fuzzy-search.ts` - Fuzzy search algorithm for Danish text
+- `lib/school-storage.ts` - Last school persistence for auto-redirect
+- `lib/profile-cache.ts` - User profile and viewed entity caching
 - `styles/globals.css` - Main styles, hides original Lectio UI, page-specific styling
 
 ## Architecture
@@ -42,14 +50,15 @@ fetch(`${window.location.origin}/lectio/${schoolId}/path.aspx`)
 Note: `window.location.href = "/relative/path"` and `<a href="/path">` work fine with relative URLs - this only applies to `fetch()` and similar APIs.
 
 ## Features
-- **Custom Sidebar** - Modern navigation with collapsible "Find Skema" and "Ændringer" sections
-- **Student Search** - Fast search on FindSkema pages, adapts to type (elev, lærer, lokale, etc.)
-- **Profile Caching** - User profile persists when viewing other students' schedules
-- **Viewing Header** - Shows whose schedule you're viewing with their picture
-- **Profile Picture Enlargement** - Click on profile pictures to view full size
-- **Forside Redesign** - Modern greeting with time-based message, responsive masonry card layout
-- **Page-Specific Styling** - Messages page two-column layout, UV beskrivelser grid
-- **Print Page Support** - Sidebar hidden on print pages
+- **Login Page Redesign** - School selector with search, "continue to last school" quick access
+- **Session Popup Block** - Blocks "Din session udløber snart" popup
+- **Custom Sidebar** - Modern navigation with collapsible sections, settings modal access
+- **FindSkema Redesign** - Fuzzy search, type filters, starred people, recent searches, person cards
+- **Schedule Enhancements** - Today highlight, current time indicator, back navigation
+- **Viewing Header** - Shows whose schedule with star toggle, type badge, back link
+- **Settings Modal** - Appearance, notifications, advanced settings, version info
+- **Clean Page Titles** - Modern titles with unread message badge count
+- **Forside Redesign** - Time-based greeting, live clock, masonry card layout
 
 ## Commands
 ```bash

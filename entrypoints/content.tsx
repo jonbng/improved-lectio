@@ -3,12 +3,13 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { FindSkemaPage } from '@/components/FindSkemaPage';
 import { ViewingScheduleHeader } from '@/components/ViewingScheduleHeader';
 import { ForsideGreeting } from '@/components/ForsideGreeting';
+import { MembersPage, parseMembersFromDOM } from '@/components/MembersPage';
 import {
   SidebarProvider,
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { initPreloading } from '@/lib/preload';
-import { updateProfileCache, updateLoginState, getCachedProfile, extractViewedPerson, isViewingOwnPage } from '@/lib/profile-cache';
+import { updateProfileCache, updateLoginState, getCachedProfile, extractViewedEntity, isViewingOwnPage, getViewedEntityId } from '@/lib/profile-cache';
 import { updatePageTitle, observeTitleChanges } from '@/lib/page-titles';
 import '@/styles/globals.css';
 
@@ -194,9 +195,21 @@ function initLayout() {
           injectForsideGreeting();
         }
 
+        // Inject members page UI
+        if (window.location.pathname.toLowerCase().includes('members.aspx')) {
+          injectMembersPage(schoolId);
+        }
+
         // Inject "viewing schedule" header when looking at someone else's schedule
         if (!isViewingOwnPage()) {
           injectViewingScheduleHeader(schoolId);
+
+          // Add body class for entity schedules (non-person types like hold, class, room)
+          // This enables showing the Lectio subnavigation for these pages
+          const viewedEntity = getViewedEntityId();
+          if (viewedEntity && viewedEntity.type !== 'student' && viewedEntity.type !== 'teacher') {
+            document.body.classList.add('il-entity-schedule');
+          }
         }
       }
 
@@ -486,8 +499,8 @@ function applyMasonryLayout() {
 }
 
 function injectViewingScheduleHeader(schoolId: string) {
-  const viewedPerson = extractViewedPerson();
-  if (!viewedPerson) return;
+  const viewedEntity = extractViewedEntity();
+  if (!viewedEntity) return;
 
   // Find the content container
   const contentContainer = document.getElementById('il-lectio-content');
@@ -503,14 +516,56 @@ function injectViewingScheduleHeader(schoolId: string) {
   // Render the header component
   render(
     <ViewingScheduleHeader
-      name={viewedPerson.name}
-      className={viewedPerson.className}
-      pictureUrl={viewedPerson.pictureUrl}
-      type={viewedPerson.type}
+      name={viewedEntity.name}
+      subtitle={viewedEntity.subtitle}
+      pictureUrl={viewedEntity.pictureUrl}
+      type={viewedEntity.type}
       schoolId={schoolId}
+      entityId={viewedEntity.id}
     />,
     headerContainer
   );
 
-  console.log('[BetterLectio] Viewing schedule header injected');
+  console.log('[BetterLectio] Viewing schedule header injected for', viewedEntity.type);
+}
+
+function injectMembersPage(schoolId: string) {
+  const url = new URL(window.location.href);
+  const reportType = url.searchParams.get('reporttype');
+
+  // Redirect to withpics format if not already there (gives us pictures in the table)
+  if (reportType !== 'withpics') {
+    url.searchParams.set('reporttype', 'withpics');
+    window.location.replace(url.toString());
+    return;
+  }
+
+  // Parse members from the existing table
+  const members = parseMembersFromDOM();
+  if (members.length === 0) {
+    console.log('[BetterLectio] No members found on page');
+    return;
+  }
+
+  // Find the content container
+  const contentContainer = document.getElementById('il-lectio-content');
+  if (!contentContainer) return;
+
+  // Create container for our members page
+  const membersContainer = document.createElement('div');
+  membersContainer.id = 'il-members-page';
+
+  // Append to content container (after the viewing header if present)
+  contentContainer.appendChild(membersContainer);
+
+  // Add class to hide the original Lectio content
+  document.body.classList.add('il-members-page-active');
+
+  // Render the members page component
+  render(
+    <MembersPage schoolId={schoolId} members={members} />,
+    membersContainer
+  );
+
+  console.log('[BetterLectio] Members page injected with', members.length, 'members');
 }

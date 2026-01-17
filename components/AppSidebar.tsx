@@ -280,16 +280,15 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-base">Navigation</SidebarGroupLabel>
+      <SidebarContent className="px-1">
+        <SidebarGroup className="py-2">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {navMain.map((item) => (
                 <SidebarMenuItem key={item.page}>
-                  <SidebarMenuButton asChild isActive={isActive(item.page)} tooltip={item.title} className="text-lg py-2 h-auto">
+                  <SidebarMenuButton asChild isActive={isActive(item.page)} tooltip={item.title} className="text-[1rem]! py-2.5! h-auto! rounded-lg! data-[active=true]:bg-sidebar-accent! data-[active=true]:font-medium!">
                     <a href={`${baseUrl}/${item.page}.aspx`}>
-                      <item.icon className="size-6" />
+                      <item.icon className="size-5! opacity-80" />
                       <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
@@ -299,17 +298,17 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <SidebarSeparator className="my-2 opacity-50" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-base">Mere</SidebarGroupLabel>
+        <SidebarGroup className="py-2">
+          <SidebarGroupLabel className="text-[0.9rem]! font-semibold! text-muted-foreground! px-3 mb-1.5">Mere</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {navSecondary.map((item) => (
                 <SidebarMenuItem key={item.page}>
-                  <SidebarMenuButton asChild isActive={isActive(item.page)} tooltip={item.title} className="text-lg py-2 h-auto">
+                  <SidebarMenuButton asChild isActive={isActive(item.page)} tooltip={item.title} className="text-[1rem]! py-2.5! h-auto! rounded-lg! data-[active=true]:bg-sidebar-accent! data-[active=true]:font-medium!">
                     <a href={`${baseUrl}/${item.page}.aspx`}>
-                      <item.icon className="size-6" />
+                      <item.icon className="size-5! opacity-80" />
                       <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
@@ -319,38 +318,38 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <SidebarSeparator className="my-2 opacity-50" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-base">Skemaer</SidebarGroupLabel>
+        <SidebarGroup className="py-2">
+          <SidebarGroupLabel className="text-[0.9rem]! font-semibold! text-muted-foreground! px-3 mb-1.5">Skemaer</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {/* Find Skema collapsible */}
               <Collapsible open={findSkemaOpen} onOpenChange={setFindSkemaOpen} className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip="Find Skema" className="text-lg py-2 h-auto">
-                      <FileSearch className="size-6" />
+                    <SidebarMenuButton tooltip="Find Skema" className="text-[1rem]! py-2.5! h-auto! rounded-lg!">
+                      <FileSearch className="size-5! opacity-80" />
                       <span>Find Skema</span>
-                      <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      <ChevronRight className="ml-auto size-4 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <SidebarMenuSub>
+                    <SidebarMenuSub className="ml-4 mt-1 border-l-0 pl-4">
                       {findSkemaItems.map((item) => (
                         <SidebarMenuSubItem key={item.type}>
-                          <SidebarMenuSubButton asChild>
+                          <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
                             <a href={`${baseUrl}/FindSkema.aspx?type=${item.type}`}>
-                              <item.icon className="size-4" />
+                              <item.icon className="size-4 opacity-70" />
                               <span>{item.title}</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       ))}
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
+                        <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
                           <a href={`${baseUrl}/FindSkemaAdv.aspx`}>
-                            <Search className="size-4" />
+                            <Search className="size-4 opacity-70" />
                             <span>Avanceret</span>
                           </a>
                         </SidebarMenuSubButton>
@@ -364,17 +363,17 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               <Collapsible open={calendarOpen} onOpenChange={setCalendarOpen} className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip="Kalendervisninger" className="text-lg py-2 h-auto">
-                      <CalendarDays className="size-6" />
+                    <SidebarMenuButton tooltip="Kalendervisninger" className="text-[1rem]! py-2.5! h-auto! rounded-lg!">
+                      <CalendarDays className="size-5! opacity-80" />
                       <span>Ændringer</span>
-                      <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      <ChevronRight className="ml-auto size-4 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <SidebarMenuSub>
+                    <SidebarMenuSub className="ml-4 mt-1 border-l-0 pl-4">
                       {calendarItems.map((item) => (
                         <SidebarMenuSubItem key={item.page}>
-                          <SidebarMenuSubButton asChild>
+                          <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
                             <a href={`${baseUrl}/${item.page}.aspx`}>
                               <span>{item.title}</span>
                             </a>
@@ -390,86 +389,86 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarSeparator />
-        <div className="relative px-2 py-2" ref={menuRef}>
+      <SidebarFooter className="px-2 pb-3">
+        <SidebarSeparator className="mb-3 opacity-50" />
+        <div className="relative" ref={menuRef}>
             {/* Dropdown menu - positioned above the trigger */}
             {menuOpen && (
-              <div className="absolute bottom-full left-2 right-2 mb-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
-                <div className="p-3 border-b border-border">
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="p-4 border-b border-border/50">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-14 w-14 rounded-lg">
+                    <Avatar className="h-12 w-12 rounded-lg">
                       {profilePic ? (
                         <AvatarImage src={profilePic} alt={userName} className="object-cover object-top" />
                       ) : null}
-                      <AvatarFallback className="rounded-lg text-lg">
+                      <AvatarFallback className="rounded-lg text-base">
                         {userName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left leading-tight">
-                      <span className="truncate font-semibold text-base">{userName}</span>
-                      <span className="truncate text-sm text-muted-foreground">{userClass}</span>
+                      <span className="truncate font-semibold text-[1rem]!">{userName}</span>
+                      <span className="truncate text-[0.85rem] text-muted-foreground">{userClass}</span>
                     </div>
                   </div>
                 </div>
-                <div className="p-1">
+                <div className="p-1.5">
                   <a
                     href={`${baseUrl}/indstillinger/studentIndstillinger.aspx`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-accent/80 transition-colors"
                   >
-                    <User className="size-4" />
+                    <User className="size-[1.1rem] opacity-70" />
                     Profil
                   </a>
                   <a
                     href={`${baseUrl}/digitaltStudiekort.aspx`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-accent/80 transition-colors"
                   >
-                    <IdCard className="size-4" />
+                    <IdCard className="size-[1.1rem] opacity-70" />
                     Studiekort
                   </a>
                   <a
                     href={`${baseUrl}/Elev_SPS.aspx`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-accent/80 transition-colors"
                   >
-                    <ListChecks className="size-4" />
+                    <ListChecks className="size-[1.1rem] opacity-70" />
                     SPS
                   </a>
                   <a
                     href={`${baseUrl}/bd/userreservations.aspx`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-accent/80 transition-colors"
                   >
-                    <Library className="size-4" />
+                    <Library className="size-[1.1rem] opacity-70" />
                     Bøger
                   </a>
                   <a
                     href={`${baseUrl}/default.aspx?menu=kontakt`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-accent/80 transition-colors"
                   >
-                    <MessageSquare className="size-4" />
+                    <MessageSquare className="size-[1.1rem] opacity-70" />
                     Kontakt
                   </a>
                   <a
                     href={`${baseUrl}/help/mainhelp.aspx`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-accent/80 transition-colors"
                   >
-                    <HelpCircle className="size-4" />
+                    <HelpCircle className="size-[1.1rem] opacity-70" />
                     Hjælp
                   </a>
                 </div>
-                <div className="p-1 border-t border-border">
+                <div className="p-1.5 border-t border-border/50">
                   <button
                     type="button"
                     onClick={() => {
                       setSettingsOpen(true);
                       setMenuOpen(false);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                    className="flex w-full items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-accent/80 transition-colors"
                   >
-                    <Settings className="size-4" />
+                    <Settings className="size-[1.1rem] opacity-70" />
                     Indstillinger
                   </button>
                 </div>
-                <div className="p-1 border-t border-border">
+                <div className="p-1.5 border-t border-border/50">
                   <a
                     href={`${baseUrl}/logout.aspx`}
                     onClick={(e) => {
@@ -479,9 +478,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                         window.location.href = "https://www.lectio.dk";
                       });
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-destructive"
+                    className="flex items-center gap-3 px-3 py-2.5 text-[0.9rem] rounded-lg hover:bg-destructive/10 transition-colors text-destructive"
                   >
-                    <LogOut className="size-4" />
+                    <LogOut className="size-[1.1rem]" />
                     Log ud
                   </a>
                 </div>
@@ -492,10 +491,10 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent transition-colors text-left"
+              className="flex w-full items-center gap-3 rounded-lg p-2.5 hover:bg-sidebar-accent/80 transition-all text-left"
             >
               <Avatar
-                className="h-10 w-10 rounded-lg cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                className="h-10 w-10 rounded-lg cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (profilePic) setImageEnlarged(true);
@@ -504,15 +503,15 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 {profilePic ? (
                   <AvatarImage src={profilePic} alt={userName} className="object-cover object-top" />
                 ) : null}
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback className="rounded-lg text-sm">
                   {userName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left leading-tight">
-                <span className="truncate font-semibold text-lg">{userName}</span>
-                <span className="truncate text-base text-muted-foreground">{userClass}</span>
+              <div className="grid flex-1 text-left leading-snug">
+                <span className="truncate font-medium text-[0.95rem]!">{userName}</span>
+                <span className="truncate text-[0.8rem] text-muted-foreground/80">{userClass}</span>
               </div>
-              <ChevronUp className={`size-4 transition-transform ${menuOpen ? '' : 'rotate-180'}`} />
+              <ChevronUp className={`size-4 opacity-40 transition-transform duration-200 ${menuOpen ? '' : 'rotate-180'}`} />
             </button>
           </div>
       </SidebarFooter>
@@ -526,7 +525,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <img
             src={profilePic}
             alt={userName}
-            className="max-w-[80vw] max-h-[80vh] rounded-xl shadow-2xl object-contain animate-in zoom-in-95 duration-200"
+            className="max-w-[80vw] max-h-[80vh] rounded-lg shadow-2xl object-contain animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

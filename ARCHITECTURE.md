@@ -53,53 +53,49 @@
 betterlectio/
 ├── entrypoints/              # Extension entry points
 │   ├── content.tsx           # Main content script
+│   ├── login.content.tsx     # Login page redesign
 │   ├── hide-flash.content.ts # FOUC prevention script
-│   ├── background.ts         # Background service worker
-│   └── popup/                # Extension popup UI
-│       ├── index.html
-│       └── main.tsx
+│   ├── session-block.content.ts # Blocks session timeout popup
+│   ├── redirect-forside.content.ts # Redirects default.aspx to forside.aspx
+│   └── background.ts         # Background service worker
 │
 ├── components/               # UI components
 │   ├── AppSidebar.tsx        # Main sidebar navigation
-│   ├── StudentSearch.tsx     # Universal search component
+│   ├── LoginPage.tsx         # School selector UI
+│   ├── FindSkemaPage.tsx     # FindSkema search page redesign
+│   ├── PersonCard.tsx        # Reusable person/entity card
+│   ├── MembersPage.tsx       # Members list card grid
 │   ├── ViewingScheduleHeader.tsx  # Header when viewing others
-│   ├── ForsideGreeting.tsx   # Dynamic greeting for forside page
-│   └── ui/                   # shadcn/ui components
-│       ├── avatar.tsx
-│       ├── button.tsx
-│       ├── collapsible.tsx
-│       ├── dropdown-menu.tsx
-│       ├── sidebar.tsx
-│       └── ... (20+ components)
+│   ├── SettingsModal.tsx     # Settings/about modal
+│   ├── ForsideGreeting.tsx   # Dynamic greeting for forside
+│   └── ui/                   # shadcn/ui components (20+)
 │
 ├── lib/                      # Utility libraries
 │   ├── preload.ts            # Speculation Rules & prefetching
-│   ├── profile-cache.ts      # User profile caching for cross-page persistence
+│   ├── profile-cache.ts      # User profile & entity caching
+│   ├── school-storage.ts     # Last school persistence
+│   ├── findskema-storage.ts  # Starred/recents/picture cache
+│   ├── fuzzy-search.ts       # Fuzzy search algorithm
+│   ├── page-titles.ts        # Clean page title management
 │   └── utils.ts              # Helper functions (cn())
 │
 ├── hooks/                    # React/Preact hooks
 │   └── use-mobile.ts         # Mobile detection hook
 │
 ├── styles/
-│   └── globals.css           # Main stylesheet (552 lines)
+│   └── globals.css           # Main stylesheet
 │
 ├── public/
-│   └── icon/                 # Extension icons (16-128px)
+│   ├── icon/                 # Extension icons (16-128px)
+│   └── assets/               # Logo variants, favicon
 │
+├── docs/                     # Additional documentation
+├── tools/lectio-cli/         # CLI for fetching Lectio pages
 ├── lectio-scripts/           # Reference: Decompiled Lectio JS
-│   └── LC/                   # Lectio client-side code
+├── lectio-html/              # Reference: HTML snapshots
 │
-├── lectio-html/              # Reference: Original HTML snapshots
-│   └── lectio/94/            # Sample pages from school ID 94
-│
-├── .github/workflows/
-│   └── build.yml             # CI/CD automation
-│
-├── package.json              # Dependencies & scripts
+├── .github/workflows/        # CI/CD (build, release)
 ├── wxt.config.ts             # WXT extension configuration
-├── tsconfig.json             # TypeScript configuration
-├── components.json           # shadcn/ui configuration
-├── tailwind.config.ts        # Tailwind configuration
 └── CLAUDE.md                 # AI assistant instructions
 ```
 
@@ -172,16 +168,26 @@ The extension follows a **content script injection architecture** where custom U
 - Supports prerendering optimization
 - Creates smooth transition experience
 
-```typescript
-// Runs before any Lectio content renders
-export default defineContentScript({
-  matches: ["*://*.lectio.dk/*"],
-  runAt: "document_start",
-  // ...
-});
-```
+### 2. Session Block (`entrypoints/session-block.content.ts`)
 
-### 2. Main Content Script (`entrypoints/content.tsx`)
+**Purpose:** Prevents Lectio's "Din session udløber snart" popup
+
+- Runs at `document_start` in MAIN world
+- Overrides `window.SessionHelper` before Lectio initializes it
+- Server session still renews on normal navigation
+
+### 3. Login Page (`entrypoints/login.content.tsx`)
+
+**Purpose:** Complete redesign of the school selection page
+
+Features:
+- Parses school list from Lectio's login_list.aspx
+- "Continue to last school" quick access button
+- Search/filter schools by name
+- Keyboard navigation support
+- Auto-redirect if session is still valid
+
+### 4. Main Content Script (`entrypoints/content.tsx`)
 
 **Purpose:** Primary entry point that transforms the UI
 
@@ -192,8 +198,12 @@ Key responsibilities:
 - Renders the custom `<DashboardLayout>`
 - Moves (not clones) original DOM to preserve event handlers
 - Initializes the preloading system
+- Injects page-specific components (FindSkema, Forside greeting, Members page)
+- Handles schedule enhancements (today highlight, time indicator)
+- Updates page titles to cleaner format
+- Listens for settings modal open events from background script
 
-### 3. App Sidebar (`components/AppSidebar.tsx`)
+### 5. App Sidebar (`components/AppSidebar.tsx`)
 
 **Purpose:** Custom navigation replacing Lectio's header
 
@@ -201,41 +211,48 @@ Features:
 - Dynamic school name extraction
 - User profile display with dropdown menu
 - Profile picture click-to-enlarge with fullscreen overlay
-- Navigation groups:
-  - **Main:** Forside, Skema, Elever, Opgaver, Lektier, Beskeder
-  - **Secondary:** Karakterer, Fravær, Studieplan, Dokumenter, Spørgeskema, UV-beskrivelser
-  - **Skemaer:** Collapsible "Find Skema" (Elev, Lærer, Klasse, Lokale, etc.) and "Ændringer" (Dagsændringer, Ugeændringer, Månedskalender)
-- Profile dropdown includes: Profil, Studiekort, SPS, Bøger, Kontakt, Hjælp, Log ud
+- Navigation groups with collapsible sections
+- Profile dropdown with settings modal access
 - Active page detection and highlighting
-- Uses cached profile data when viewing other students' schedules
+- Uses cached profile data when viewing other schedules
 - Collapsible sidebar support
-- Mobile-responsive design
 
-### 4. Student Search (`components/StudentSearch.tsx`)
+### 6. FindSkema Page (`components/FindSkemaPage.tsx`)
 
-**Purpose:** Fast search on FindSkema pages
+**Purpose:** Complete redesign of the FindSkema search page
 
 Features:
-- Fetches autocomplete data from Lectio's cache API
-- Adapts to page type (elev, lærer, lokale, hold, etc.)
-- Type-specific filtering and URL generation
-- Recent searches stored in localStorage
-- Keyboard shortcut (Cmd/Ctrl+K) to focus
-- Color-coded badges for different entity types
-- Includes rooms in student/teacher search for convenience
+- Fuzzy search with Danish text normalization (handles æ, ø, å)
+- Type filter toggles (Elev, Lærer, Klasse, Lokale, Ressource, Hold, Gruppe)
+- Starred people section with persistent storage
+- Recent searches with click-to-remove
+- Person cards with lazy-loaded profile pictures
+- Back navigation preservation (returns to search with query intact)
 
-### 5. Viewing Schedule Header (`components/ViewingScheduleHeader.tsx`)
+### 7. Person Card (`components/PersonCard.tsx`)
+
+**Purpose:** Reusable card component for displaying people/entities
+
+Features:
+- Lazy-loaded profile pictures using IntersectionObserver
+- Picture caching in localStorage (7-day TTL)
+- Star toggle for favorites
+- Type-specific badges with colors
+- Initials fallback when no picture available
+- Delete button for recent items
+
+### 8. Viewing Schedule Header (`components/ViewingScheduleHeader.tsx`)
 
 **Purpose:** Shows whose schedule you're viewing when not on your own
 
 Features:
-- Displays viewed person's name, class, and profile picture
-- Click-to-enlarge profile picture
-- "Back to your schedule" link
-- Color-coded badge (Elev/Lærer)
-- Only shown when viewing another student/teacher's schedule
+- Displays name, subtitle (class/code), and profile picture
+- Star toggle to add to favorites
+- Type-specific badge and icon (Elev, Lærer, Klasse, Lokale, Hold, etc.)
+- "Back to search" or "Back to your schedule" link
+- Preserves search query in back navigation
 
-### 6. Forside Greeting (`components/ForsideGreeting.tsx`)
+### 9. Forside Greeting (`components/ForsideGreeting.tsx`)
 
 **Purpose:** Dynamic greeting header for the forside (home) page
 
@@ -244,54 +261,92 @@ Features:
 - Displays user's first name from cached profile
 - Live clock with Danish locale formatting
 - Formatted date display (weekday, day, month)
-- Large, prominent typography (text-8xl greeting, text-5xl time)
 
-### 7. Profile Cache (`lib/profile-cache.ts`)
+### 10. Settings Modal (`components/SettingsModal.tsx`)
 
-**Purpose:** Persist user profile data across pages
+**Purpose:** Extension settings and about information
+
+Sections:
+- **Udseende (Appearance)** - Theme settings (planned)
+- **Notifikationer** - Notification preferences (planned)
+- **Avanceret** - Advanced settings, clear cache option
+- **Om (About)** - Version info, install date, links to GitHub/bug reports
+
+### 11. Members Page (`components/MembersPage.tsx`)
+
+**Purpose:** Card grid display for hold/klasse member lists
 
 Features:
-- Caches user name, class, and profile picture in localStorage
-- Distinguishes between logged-in user and viewed user
-- Uses meta tags and mobile menu links to identify logged-in user
-- Prevents caching viewed student's data as logged-in user's data
-- Enables profile display when viewing other students' schedules
+- Parses member table from Lectio DOM
+- Displays as PersonCard grid
+- Supports starring members
+- Teachers sorted first, then students
 
-### 8. Preload System (`lib/preload.ts`)
+### 12. Profile Cache (`lib/profile-cache.ts`)
+
+**Purpose:** Persist user profile data and detect viewed entities
+
+Features:
+- Caches logged-in user's name, class, and profile picture
+- Detects viewed entity from URL parameters (elevid, laererid, lokaleid, etc.)
+- Login state tracking to clear cache on logout
+- `isViewingOwnPage()` and `getViewedEntityId()` helpers
+
+### 13. School Storage (`lib/school-storage.ts`)
+
+**Purpose:** Remember last used school for quick login
+
+Features:
+- Stores last school ID, name, and URL
+- Used by login page for "Continue to last school" feature
+
+### 14. FindSkema Storage (`lib/findskema-storage.ts`)
+
+**Purpose:** Persistent storage for FindSkema features
+
+Features:
+- Starred people (max 50), recent searches (max 10)
+- Profile picture URL cache (7-day TTL, max 1000 entries)
+- Fetch picture URLs from Lectio context cards
+
+### 15. Fuzzy Search (`lib/fuzzy-search.ts`)
+
+**Purpose:** Fast fuzzy matching for search
+
+Features:
+- Danish text normalization (æ→ae, ø→o, å→a)
+- Multi-word search (all terms must match)
+- Scoring with bonuses for sequential/boundary matches
+
+### 16. Page Titles (`lib/page-titles.ts`)
+
+**Purpose:** Clean, modern page titles
+
+Features:
+- Maps Lectio pages to friendly titles
+- Dynamic titles for schedule pages (shows viewed person)
+- Unread message count badge in title
+- MutationObserver for dynamic updates
+
+### 17. Preload System (`lib/preload.ts`)
 
 **Purpose:** Performance optimization through speculative loading
 
-Implementation:
 - Uses Speculation Rules API for instant navigation
-- Prerenders the "skema" (schedule) page conservatively
 - Hover-based prefetching with 65ms delay
-- Tracks prefetched URLs to avoid duplicates
 - Falls back gracefully for unsupported browsers
 
-```typescript
-// Speculation Rules for modern browsers
-{
-  "prerender": [{
-    "urls": [skemaUrl],
-    "eagerness": "conservative"
-  }]
-}
-```
-
-### 9. Global Styles (`styles/globals.css`)
+### 18. Global Styles (`styles/globals.css`)
 
 **Purpose:** Complete visual overhaul
 
-Key styling areas:
-- CSS custom properties for theming (dark mode ready)
-- Hides original Lectio navigation, header, footer
-- Messages page two-column layout with folder tree
-- UV beskrivelser page - converts table to modern grid of pills
-- Forside page - masonry card layout, hidden island headers, custom greeting
-- Sidebar positioning (fixed, 16rem width)
-- Geist font application
-- Smooth transitions and animations
-- Print page exclusion
+Key areas:
+- Schedule page: today highlight, current time indicator, column widths
+- FindSkema page: hidden original UI, card grid layout
+- Members page: card grid styling
+- Messages page: two-column layout
+- Forside: masonry layout, greeting area
+- Entity schedules: show Lectio subnavigation
 
 ---
 
@@ -400,37 +455,51 @@ HTML snapshots of Lectio pages before extension modification:
 
 ## Features Summary
 
-### Implemented
-- Modern sidebar navigation with collapsible sections
-- Visual redesign with Geist font
+### Login & Session
+- Complete login page redesign with school search
+- "Continue to last school" quick access
+- Session popup blocker (no more "session expiring" popups)
+- Auto-redirect if session is still valid
+
+### Navigation & UI
+- Modern sidebar with collapsible sections
+- Settings modal (appearance, notifications, about)
+- Clean page titles with unread badge
+- Custom favicon
+
+### Schedule Features
+- Today column highlight with "I dag" label
+- Current time indicator line
+- Viewing header with star toggle and back navigation
+- Support for all entity types (student, teacher, class, room, hold, group, resource)
+
+### FindSkema Page
+- Complete redesign with fuzzy search
+- Type filter toggles
+- Starred people and recent searches
+- Person cards with lazy-loaded pictures
+- Back navigation preserves search query
+
+### Members Page
+- Card grid layout for hold/klasse members
+- Star toggle on each card
+- Teachers sorted first
+
+### Other Pages
+- Forside: time-based greeting, live clock, masonry layout
+- Messages: two-column layout, auto-redirect to Nyeste
+- UV beskrivelser: grid of pills
+
+### Performance
 - Skeleton loading (FOUC prevention)
 - Speculation Rules prerendering
 - Hover-based prefetching
-- Messages page two-column layout with folder tree
-- Auto-redirect to "Nyeste" folder
-- User profile display with click-to-enlarge pictures
-- Profile caching for cross-page persistence
-- Student/Teacher/Room search on FindSkema pages
-- Type-adaptive search (elev, lærer, lokale, hold, etc.)
-- Recent searches with localStorage persistence
-- "Viewing schedule" header when on another person's page
-- Forside page redesign:
-  - Dynamic greeting header (God morgen/formiddag/eftermiddag/aften + first name)
-  - Live clock and date display
-  - Responsive masonry card layout with JS positioning
-  - Hidden redundant island headers and mobile app link
-  - Hidden time column in messages section
-  - Hidden empty th elements in "Hold og grupper" section
-- UV beskrivelser page styling (grid of pills)
-- Print page support (sidebar hidden)
-- Dark mode CSS variables (ready for implementation)
+- Profile picture caching (7-day TTL)
 
 ### Preserved from Original Lectio
-- All form submissions
-- JavaScript event handlers
-- Navigation links
-- Search functionality
-- All original features
+- All form submissions and event handlers
+- Navigation and search functionality
+- Entity subnavigation on schedule pages
 
 ---
 
@@ -439,9 +508,9 @@ HTML snapshots of Lectio pages before extension modification:
 1. **Preact over React** - 3KB vs 40KB+ bundle size
 2. **Skeleton loading** - Perceived instant load
 3. **Speculation Rules API** - Browser-level prerendering
-4. **Conservative prerendering** - Only schedule page prerendered
-5. **Hover prefetching** - Links prefetched on hover (65ms delay)
-6. **Font preconnect** - Google Fonts loaded early
+4. **Hover prefetching** - Links prefetched on hover (65ms delay)
+5. **Picture caching** - Profile pictures cached 7 days, lazy-loaded
+6. **IntersectionObserver** - Pictures only fetched when visible
 
 ---
 

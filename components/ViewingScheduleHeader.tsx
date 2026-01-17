@@ -1,24 +1,120 @@
 import { useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Star, School, DoorOpen, Box, UsersRound, LayoutGrid, GraduationCap, Users } from 'lucide-react';
+import { isPersonStarred, toggleStarred } from '@/lib/findskema-storage';
+import type { ScheduleEntityType } from '@/lib/profile-cache';
 
 interface ViewingScheduleHeaderProps {
   name: string;
-  className?: string;
+  subtitle?: string;
   pictureUrl: string | null;
-  type: 'student' | 'teacher';
+  type: ScheduleEntityType;
   schoolId: string;
+  entityId: string;
 }
+
+// Badge configuration for each entity type
+const ENTITY_CONFIG: Record<ScheduleEntityType, {
+  label: string;
+  bgClass: string;
+  textClass: string;
+  icon: typeof Users;
+  storagePrefix: string;
+}> = {
+  student: {
+    label: 'Elev',
+    bgClass: 'bg-blue-100 dark:bg-blue-900',
+    textClass: 'text-blue-700 dark:text-blue-300',
+    icon: Users,
+    storagePrefix: 'S',
+  },
+  teacher: {
+    label: 'Lærer',
+    bgClass: 'bg-emerald-100 dark:bg-emerald-900',
+    textClass: 'text-emerald-700 dark:text-emerald-300',
+    icon: GraduationCap,
+    storagePrefix: 'T',
+  },
+  class: {
+    label: 'Klasse',
+    bgClass: 'bg-purple-100 dark:bg-purple-900',
+    textClass: 'text-purple-700 dark:text-purple-300',
+    icon: School,
+    storagePrefix: 'K',
+  },
+  room: {
+    label: 'Lokale',
+    bgClass: 'bg-amber-100 dark:bg-amber-900',
+    textClass: 'text-amber-700 dark:text-amber-300',
+    icon: DoorOpen,
+    storagePrefix: 'L',
+  },
+  resource: {
+    label: 'Ressource',
+    bgClass: 'bg-slate-100 dark:bg-slate-800',
+    textClass: 'text-slate-700 dark:text-slate-300',
+    icon: Box,
+    storagePrefix: 'R',
+  },
+  hold: {
+    label: 'Hold',
+    bgClass: 'bg-cyan-100 dark:bg-cyan-900',
+    textClass: 'text-cyan-700 dark:text-cyan-300',
+    icon: UsersRound,
+    storagePrefix: 'H',
+  },
+  group: {
+    label: 'Gruppe',
+    bgClass: 'bg-pink-100 dark:bg-pink-900',
+    textClass: 'text-pink-700 dark:text-pink-300',
+    icon: LayoutGrid,
+    storagePrefix: 'G',
+  },
+  holdelement: {
+    label: 'Hold',
+    bgClass: 'bg-indigo-100 dark:bg-indigo-900',
+    textClass: 'text-indigo-700 dark:text-indigo-300',
+    icon: UsersRound,
+    storagePrefix: 'H', // Use H for storage since it's a type of hold
+  },
+};
 
 export function ViewingScheduleHeader({
   name,
-  className,
+  subtitle,
   pictureUrl,
   type,
   schoolId,
+  entityId,
 }: ViewingScheduleHeaderProps) {
   const [imageEnlarged, setImageEnlarged] = useState(false);
+  const [starred, setStarred] = useState(() => isPersonStarred(entityId));
   const firstName = name.split(' ')[0];
+
+  const config = ENTITY_CONFIG[type];
+  const TypeIcon = config.icon;
+  const hasPicture = type === 'student' || type === 'teacher';
+
+  // Parse navigation context from URL params (set by FindSkemaPage)
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromFindSkema = urlParams.get('from') === 'findskema';
+  const searchQuery = urlParams.get('q') || '';
+
+  // Build back URL based on where user came from
+  const backUrl = fromFindSkema
+    ? `/lectio/${schoolId}/FindSkema.aspx${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`
+    : `/lectio/${schoolId}/SkemaNy.aspx`;
+  const backText = fromFindSkema ? 'Tilbage til søgning' : 'Tilbage til dit skema';
+
+  const handleToggleStar = () => {
+    const newStarred = toggleStarred({
+      id: entityId,
+      name,
+      classCode: subtitle || '',
+      type: config.storagePrefix,
+    });
+    setStarred(newStarred);
+  };
 
   // Close enlarged image on Escape key
   useEffect(() => {
@@ -37,50 +133,67 @@ export function ViewingScheduleHeader({
     <div className="bg-muted/50 border-b border-border px-4 py-3">
       <div className="flex items-center gap-4">
         <a
-          href={`/lectio/${schoolId}/SkemaNy.aspx`}
+          href={backUrl}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-4" />
-          <span>Tilbage til dit skema</span>
+          <span>{backText}</span>
         </a>
 
         <div className="h-6 w-px bg-border" />
 
         <div className="flex items-center gap-3">
-          <Avatar
-            className={`h-10 w-10 rounded-lg ${pictureUrl ? 'cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all' : ''}`}
-            onClick={() => pictureUrl && setImageEnlarged(true)}
-          >
-            {pictureUrl ? (
-              <AvatarImage src={pictureUrl} alt={name} className="object-cover object-top" />
-            ) : null}
-            <AvatarFallback className="rounded-lg">
-              {firstName.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          {hasPicture ? (
+            <Avatar
+              className={`h-10 w-10 rounded-lg ${pictureUrl ? 'cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all' : ''}`}
+              onClick={() => pictureUrl && setImageEnlarged(true)}
+            >
+              {pictureUrl ? (
+                <AvatarImage src={pictureUrl} alt={name} className="object-cover object-top" />
+              ) : null}
+              <AvatarFallback className="rounded-lg">
+                {firstName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${config.bgClass}`}>
+              <TypeIcon className={`size-5 ${config.textClass}`} />
+            </div>
+          )}
 
           <div className="flex flex-col">
             <span className="font-medium text-base">{name}</span>
             <div className="flex items-center gap-2">
-              {className && (
-                <span className="text-sm text-muted-foreground">{className}</span>
+              {subtitle && (
+                <span className="text-sm text-muted-foreground">{subtitle}</span>
               )}
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${
-                type === 'student'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
-              }`}>
-                {type === 'student' ? 'Elev' : 'Lærer'}
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${config.bgClass} ${config.textClass}`}>
+                {config.label}
               </span>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={handleToggleStar}
+            className="ml-2 p-2 rounded-lg hover:bg-accent transition-colors"
+            title={starred ? 'Fjern fra favoritter' : 'Tilføj til favoritter'}
+          >
+            <Star
+              className={`size-5 transition-colors ${
+                starred
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-muted-foreground hover:text-yellow-400'
+              }`}
+            />
+          </button>
         </div>
       </div>
 
       {/* Enlarged profile picture overlay */}
       {imageEnlarged && pictureUrl && (
         <div
-          className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center cursor-pointer backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center cursor-pointer backdrop-blur-sm"
           onClick={() => setImageEnlarged(false)}
         >
           <img

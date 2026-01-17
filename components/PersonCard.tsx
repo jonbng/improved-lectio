@@ -27,6 +27,7 @@ interface PersonCardProps {
   onRemove?: (id: string) => void;
   onClick?: () => void;
   schoolId: string;
+  searchQuery?: string; // If provided, adds from=findskema&q= to href for back navigation
 }
 
 export function PersonCard({
@@ -40,8 +41,14 @@ export function PersonCard({
   onRemove,
   onClick,
   schoolId,
+  searchQuery,
 }: PersonCardProps) {
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.S;
+
+  // Build href with navigation context (for back button on schedule page)
+  const fullHref = searchQuery
+    ? `${href}&from=findskema&q=${encodeURIComponent(searchQuery)}`
+    : `${href}&from=findskema`;
   const initials = name
     .split(' ')
     .slice(0, 2)
@@ -156,7 +163,7 @@ export function PersonCard({
   return (
     <a
       ref={cardRef}
-      href={href}
+      href={fullHref}
       onClick={onClick}
       className="findskema-person-card group"
     >

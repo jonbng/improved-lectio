@@ -18,12 +18,27 @@ export interface UserProfile {
   cachedAt: number;
 }
 
-export interface ViewedPerson {
+export type ScheduleEntityType =
+  | 'student'
+  | 'teacher'
+  | 'class'
+  | 'room'
+  | 'resource'
+  | 'hold'
+  | 'group'
+  | 'holdelement';
+
+export interface ViewedEntity {
   name: string;
-  className: string;
-  pictureUrl: string | null;
+  subtitle: string; // class code for students, or descriptive info for others
+  pictureUrl: string | null; // only applicable for students/teachers
   id: string;
-  type: 'student' | 'teacher';
+  type: ScheduleEntityType;
+}
+
+// Keep ViewedPerson as alias for backwards compatibility
+export interface ViewedPerson extends ViewedEntity {
+  className: string; // alias for subtitle
 }
 
 export function getCachedProfile(): UserProfile | null {
@@ -142,15 +157,39 @@ export function getLoggedInUserId(): string | null {
 }
 
 /**
- * Get the ID of the person whose schedule/page we're viewing from the URL.
+ * Get the ID of the entity whose schedule/page we're viewing from the URL.
+ */
+export function getViewedEntityId(): { id: string; type: ScheduleEntityType } | null {
+  const search = window.location.search;
+
+  // Check all URL parameter types
+  const patterns: [RegExp, ScheduleEntityType][] = [
+    [/elevid=(\d+)/, 'student'],
+    [/laererid=(\d+)/, 'teacher'],
+    [/klasseid=(\d+)/, 'class'],
+    [/lokaleid=(\d+)/, 'room'],
+    [/ressourceid=(\d+)/, 'resource'],
+    [/holdid=(\d+)/, 'hold'],
+    [/gruppeid=(\d+)/, 'group'],
+    [/holdelementid=(\d+)/, 'holdelement'],
+  ];
+
+  for (const [regex, type] of patterns) {
+    const match = search.match(regex);
+    if (match) return { id: match[1], type };
+  }
+
+  return null;
+}
+
+/**
+ * @deprecated Use getViewedEntityId instead
  */
 export function getViewedPersonId(): { id: string; type: 'student' | 'teacher' } | null {
-  const elevMatch = window.location.search.match(/elevid=(\d+)/);
-  if (elevMatch) return { id: elevMatch[1], type: 'student' };
-
-  const teacherMatch = window.location.search.match(/laererid=(\d+)/);
-  if (teacherMatch) return { id: teacherMatch[1], type: 'teacher' };
-
+  const result = getViewedEntityId();
+  if (result && (result.type === 'student' || result.type === 'teacher')) {
+    return result as { id: string; type: 'student' | 'teacher' };
+  }
   return null;
 }
 
@@ -158,8 +197,13 @@ export function getViewedPersonId(): { id: string; type: 'student' | 'teacher' }
  * Check if we're viewing our own page or someone else's.
  */
 export function isViewingOwnPage(): boolean {
-  const viewed = getViewedPersonId();
+  const viewed = getViewedEntityId();
   if (!viewed) return true; // No ID in URL = own page
+
+  // Non-person types are always "someone else's" page
+  if (viewed.type !== 'student' && viewed.type !== 'teacher') {
+    return false;
+  }
 
   const loggedInId = getLoggedInUserId();
   if (!loggedInId) return true; // Can't determine, assume own page
@@ -168,50 +212,125 @@ export function isViewingOwnPage(): boolean {
 }
 
 /**
- * Extract info about the person whose schedule we're viewing (when it's not us).
+ * Extract info about the entity whose schedule we're viewing (when it's not us).
  */
-export function extractViewedPerson(): ViewedPerson | null {
-  const viewed = getViewedPersonId();
+export function extractViewedEntity(): ViewedEntity | null {
+  const viewed = getViewedEntityId();
   if (!viewed || isViewingOwnPage()) return null;
 
-  // Extract from main title: "Eleven Carl Christian Meding(k), 1x - Skema"
+  // Extract from main title element
   const titleEl = document.querySelector('#s_m_HeaderContent_MainTitle');
   const titleText = titleEl?.textContent || '';
 
   let name = '';
-  let className = '';
+  let subtitle = '';
 
-  if (viewed.type === 'student') {
-    const match = titleText.match(/^Eleven\s+(.+?)\([^)]+\),\s*(\S+)/);
-    if (match) {
-      name = match[1].trim();
-      className = match[2];
+  // Title patterns for different entity types:
+  // Student: "Eleven Carl Christian Meding(k), 1x - Skema"
+  // Teacher: "Læreren John Doe - Skema"
+  // Class: "Stamklassen 1x - Skema" or "Klassen 1x - Skema"
+  // Room: "Lokalet A1.01 - Skema"
+  // Resource: "Ressourcen X - Skema"
+  // Hold: "Holdet 1x En A - Skema"
+  // Group: "Gruppen X - Skema"
+  // Holdelement: Often same as Hold
+
+  switch (viewed.type) {
+    case 'student': {
+      const match = titleText.match(/^Eleven\s+(.+?)\([^)]+\),\s*(\S+)/);
+      if (match) {
+        name = match[1].trim();
+        subtitle = match[2];
+      }
+      break;
     }
-  } else {
-    // Teacher: "Læreren John Doe - Skema"
-    const match = titleText.match(/^Læreren\s+(.+?)\s*-/);
-    if (match) {
-      name = match[1].trim();
+    case 'teacher': {
+      const match = titleText.match(/^Læreren\s+(.+?)\s*-/);
+      if (match) {
+        name = match[1].trim();
+      }
+      break;
+    }
+    case 'class': {
+      // "Stamklassen 1x - Skema" or "Klassen 1x - Skema"
+      const match = titleText.match(/^(?:Stam)?[Kk]lassen\s+(.+?)\s*-/);
+      if (match) {
+        name = match[1].trim();
+      }
+      break;
+    }
+    case 'room': {
+      const match = titleText.match(/^Lokalet\s+(.+?)\s*-/);
+      if (match) {
+        name = match[1].trim();
+      }
+      break;
+    }
+    case 'resource': {
+      const match = titleText.match(/^Ressourcen\s+(.+?)\s*-/);
+      if (match) {
+        name = match[1].trim();
+      }
+      break;
+    }
+    case 'hold':
+    case 'holdelement': {
+      const match = titleText.match(/^Holdet\s+(.+?)\s*-/);
+      if (match) {
+        name = match[1].trim();
+      }
+      break;
+    }
+    case 'group': {
+      const match = titleText.match(/^Gruppen\s+(.+?)\s*-/);
+      if (match) {
+        name = match[1].trim();
+      }
+      break;
     }
   }
 
-  // Get the viewed person's picture
+  // Get picture (only for students/teachers)
   let pictureUrl: string | null = null;
-  const profileImg = document.querySelector('#s_m_HeaderContent_picctrlthumbimage') as HTMLImageElement;
-  if (profileImg?.src) {
-    const url = new URL(profileImg.src, window.location.origin);
-    url.searchParams.set('fullsize', '1');
-    pictureUrl = url.toString();
+  if (viewed.type === 'student' || viewed.type === 'teacher') {
+    const profileImg = document.querySelector('#s_m_HeaderContent_picctrlthumbimage') as HTMLImageElement;
+    if (profileImg?.src) {
+      const url = new URL(profileImg.src, window.location.origin);
+      url.searchParams.set('fullsize', '1');
+      pictureUrl = url.toString();
+    }
+  }
+
+  // If we couldn't parse the name, try a generic fallback
+  if (!name) {
+    // Generic pattern: "Something X - Page title" (e.g., "Gruppen Alle 1x-elever - Lærere og elever")
+    const genericMatch = titleText.match(/^(.+?)\s*-\s*.+$/);
+    if (genericMatch) {
+      name = genericMatch[1].trim();
+    }
   }
 
   if (!name && !pictureUrl) return null;
 
   return {
     name: name || 'Ukendt',
-    className,
+    subtitle,
     pictureUrl,
     id: viewed.id,
     type: viewed.type,
+  };
+}
+
+/**
+ * @deprecated Use extractViewedEntity instead
+ */
+export function extractViewedPerson(): ViewedPerson | null {
+  const entity = extractViewedEntity();
+  if (!entity) return null;
+
+  return {
+    ...entity,
+    className: entity.subtitle, // Backwards compatibility alias
   };
 }
 

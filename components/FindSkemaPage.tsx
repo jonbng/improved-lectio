@@ -14,12 +14,11 @@ import {
   type StarredPerson,
   type RecentPerson,
 } from '../lib/findskema-storage';
-
-interface SearchItem {
-  name: string;
-  id: string;
-  type: string;
-}
+import {
+  searchItems,
+  createSearchText,
+  type SearchableItem,
+} from '../lib/fuzzy-search';
 
 type SearchType = 'elev' | 'laerer' | 'stamklasse' | 'lokale' | 'ressource' | 'hold' | 'gruppe' | 'all';
 
@@ -45,14 +44,31 @@ const TYPE_TO_PREFIX: Record<string, string> = {
   gruppe: 'G',
 };
 
+// Extract type key from ID - handles both single char (S, T) and two char (HE, GE, RE, RO) prefixes
+function getTypeFromId(id: string): string {
+  if (!id) return 'S';
+  const prefix = id.substring(0, 2);
+  // Map 2-char prefixes to our single-char type keys
+  if (prefix === 'HE') return 'H'; // Hold elements
+  if (prefix === 'GE') return 'G'; // Gruppe elements
+  if (prefix === 'RE' || prefix === 'RO') return 'R'; // Resources
+  if (prefix === 'SC') return 'S'; // Student codes
+  // For other cases, use first char (S, T, K, L)
+  return id.charAt(0);
+}
+
 interface FindSkemaPageProps {
   schoolId: string;
   searchType?: SearchType;
 }
 
 export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPageProps) {
-  const [query, setQuery] = useState('');
-  const [items, setItems] = useState<SearchItem[]>([]);
+  // Initialize query from URL param if returning from a schedule page
+  const [query, setQuery] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('q') || '';
+  });
+  const [items, setItems] = useState<SearchableItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [starred, setStarred] = useState<StarredPerson[]>([]);
@@ -145,17 +161,43 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
         );
         const data = await response.json();
 
+        // Debug: log all unique prefixes in the data
+        const prefixes = new Set(data.items.map((item: any[]) => item[1]?.substring(0, 2)));
+        console.log('[FindSkemaPage] Unique ID prefixes (first 2 chars):', [...prefixes].sort());
+        console.log('[FindSkemaPage] Total items:', data.items.length);
+
+        // Debug: log items that might be "Alle 1x-elever"
+        const alleItems = data.items.filter((item: any[]) => item[0]?.toLowerCase().includes('alle'));
+        console.log('[FindSkemaPage] Items containing "alle":', alleItems.map((i: any[]) => ({ name: i[0], id: i[1], prefix: i[1]?.substring(0, 2) })));
+        // Debug: specifically look for "1x" items
+        const items1x = data.items.filter((item: any[]) => item[0]?.toLowerCase().includes('1x'));
+        console.log('[FindSkemaPage] Items containing "1x":', items1x.map((i: any[]) => ({ name: i[0], id: i[1], prefix: i[1]?.substring(0, 2) })));
+
         // Load ALL items - filtering happens in the UI
-        const parsed: SearchItem[] = data.items
+        // API response format: [title, key, flags, group, cssClass, _que, isContextCard, shortName, longName]
+        const parsed: SearchableItem[] = data.items
           .filter((item: any[]) => {
             const id = item[1];
             return id && typeof id === 'string';
           })
-          .map((item: any[]) => ({
-            name: item[0],
-            id: item[1],
-            type: item[1]?.charAt(0) || 'S',
-          }));
+          .map((item: any[]) => {
+            const name = item[0] as string;
+            const id = item[1] as string;
+            const shortName = (item[7] as string | null) || null;
+            const longName = (item[8] as string | null) || null;
+            return {
+              name,
+              id,
+              type: getTypeFromId(id),
+              shortName,
+              longName,
+              searchText: createSearchText(name, shortName, longName),
+            };
+          });
+
+        // Debug: log parsed items containing "alle"
+        const parsedAlleItems = parsed.filter(i => i.name.toLowerCase().includes('alle'));
+        console.log('[FindSkemaPage] Parsed items containing "alle":', parsedAlleItems.map(i => ({ name: i.name, id: i.id, type: i.type, searchText: i.searchText })));
 
         setItems(parsed);
         setLoading(false);
@@ -191,17 +233,10 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Normalize string by removing diacritics (accents) for search
-  const normalizeString = (str: string) =>
-    str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  // Filter items based on search query and active filters
+  // Filter items based on search query and active filters using fuzzy search
   const filteredItems = useMemo(() => {
-    if (query.length < 2) return [];
-    const normalizedQuery = normalizeString(query);
-    return items
-      .filter(item => activeFilters.has(item.type) && normalizeString(item.name).includes(normalizedQuery))
-      .slice(0, 30);
+    const results = searchItems(items, query, activeFilters, 50);
+    return results.map(r => r.item);
   }, [items, query, activeFilters]);
 
   // Get classmates (people in same class as user)
@@ -257,7 +292,7 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
   }, []);
 
   // Handle card click (add to recents)
-  const handleCardClick = useCallback((item: SearchItem) => {
+  const handleCardClick = useCallback((item: SearchableItem) => {
     const { displayName, classCode } = parsePersonInfo(item.name);
     addRecentPerson({
       id: item.id,
@@ -372,6 +407,7 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
                     onStarToggle={handleStarToggle}
                     onClick={() => handleCardClick(item)}
                     schoolId={schoolId}
+                    searchQuery={query}
                   />
                 );
               })}
@@ -402,6 +438,7 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
                 onStarToggle={handleStarToggle}
                 onRemove={handleRemoveRecent}
                 schoolId={schoolId}
+                searchQuery={query}
               />
             ))}
           </div>
@@ -436,6 +473,7 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
                   });
                 }}
                 schoolId={schoolId}
+                searchQuery={query}
               />
             ))}
           </div>
@@ -464,6 +502,7 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
                   onStarToggle={handleStarToggle}
                   onClick={() => handleCardClick(item)}
                   schoolId={schoolId}
+                  searchQuery={query}
                 />
               );
             })}
