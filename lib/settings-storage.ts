@@ -1,0 +1,237 @@
+import { z } from 'zod';
+
+const SETTINGS_KEY = 'il-feature-settings';
+const SETTINGS_VERSION = 1;
+
+/**
+ * Feature settings schema with Zod validation.
+ * All settings default to true (enabled) for backward compatibility.
+ */
+export const FeatureSettingsSchema = z.object({
+  version: z.number().default(SETTINGS_VERSION),
+
+  // Visual Features
+  visual: z.object({
+    customFavicon: z.boolean().default(true),
+    cleanPageTitles: z.boolean().default(true),
+    foucPrevention: z.boolean().default(true), // requires reload
+  }).default({}),
+
+  // Schedule Features
+  schedule: z.object({
+    todayHighlight: z.boolean().default(true),
+    currentTimeIndicator: z.boolean().default(true),
+    viewingScheduleHeader: z.boolean().default(true),
+  }).default({}),
+
+  // Page Redesigns
+  pages: z.object({
+    findSkemaRedesign: z.boolean().default(true),
+    forsideRedesign: z.boolean().default(true),
+    membersPageCards: z.boolean().default(true),
+    loginPageRedesign: z.boolean().default(true), // requires reload
+  }).default({}),
+
+  // Behavior Features
+  behavior: z.object({
+    sessionPopupBlocker: z.boolean().default(true), // requires reload
+    autoRedirectForside: z.boolean().default(true), // requires reload
+    messagesAutoRedirect: z.boolean().default(true),
+    continueToLastSchool: z.boolean().default(true),
+    preloading: z.boolean().default(true),
+  }).default({}),
+
+  // Data Features
+  // Note: pictureCaching is always enabled to avoid Lectio rate limiting
+  data: z.object({
+    starredPeople: z.boolean().default(true),
+    recentSearches: z.boolean().default(true),
+  }).default({}),
+
+  // Sidebar Customization
+  sidebar: z.object({
+    showForside: z.boolean().default(true),
+    showSkema: z.boolean().default(true),
+    showElever: z.boolean().default(true),
+    showOpgaver: z.boolean().default(true),
+    showLektier: z.boolean().default(true),
+    showBeskeder: z.boolean().default(true),
+    showKarakterer: z.boolean().default(true),
+    showFravaer: z.boolean().default(true),
+    showStudieplan: z.boolean().default(true),
+    showDokumenter: z.boolean().default(true),
+    showSpoergeskema: z.boolean().default(true),
+    showUVBeskrivelser: z.boolean().default(true),
+    showFindSkema: z.boolean().default(true),
+    showAendringer: z.boolean().default(true),
+  }).default({}),
+});
+
+export type FeatureSettings = z.infer<typeof FeatureSettingsSchema>;
+
+/**
+ * Settings that require a page reload to take effect.
+ * These are checked by content scripts that run at document_start.
+ */
+export const SETTINGS_REQUIRING_RELOAD = [
+  'visual.foucPrevention',
+  'behavior.sessionPopupBlocker',
+  'behavior.autoRedirectForside',
+  'pages.loginPageRedesign',
+] as const;
+
+/**
+ * Feature dependencies - key depends on value being enabled.
+ */
+export const FEATURE_DEPENDENCIES: Record<string, string> = {
+  'data.starredPeople': 'pages.findSkemaRedesign',
+  'data.recentSearches': 'pages.findSkemaRedesign',
+  'schedule.currentTimeIndicator': 'schedule.todayHighlight',
+};
+
+/**
+ * Get the current settings from localStorage.
+ * Returns default settings if no settings exist or if parsing fails.
+ */
+export function getSettings(): FeatureSettings {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (!stored) {
+      return FeatureSettingsSchema.parse({});
+    }
+
+    const parsed = JSON.parse(stored);
+
+    // Handle version migrations if needed
+    if (parsed.version !== SETTINGS_VERSION) {
+      return migrateSettings(parsed);
+    }
+
+    return FeatureSettingsSchema.parse(parsed);
+  } catch {
+    // Return defaults on any error
+    return FeatureSettingsSchema.parse({});
+  }
+}
+
+/**
+ * Save settings to localStorage.
+ * Merges with existing settings and ensures version is set.
+ */
+export function saveSettings(settings: FeatureSettings): void {
+  try {
+    const merged = {
+      ...settings,
+      version: SETTINGS_VERSION,
+    };
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/**
+ * Update a single setting value.
+ * @param category - The settings category (visual, schedule, pages, behavior, data, sidebar)
+ * @param key - The setting key within the category
+ * @param value - The new value
+ */
+export function updateSetting<K extends keyof Omit<FeatureSettings, 'version'>>(
+  category: K,
+  key: keyof FeatureSettings[K],
+  value: boolean
+): void {
+  const settings = getSettings();
+  (settings[category] as Record<string, boolean>)[key as string] = value;
+  saveSettings(settings);
+}
+
+/**
+ * Check if a specific feature is enabled.
+ * This is a quick synchronous check for use in content scripts.
+ * @param category - The settings category
+ * @param key - The setting key
+ * @returns true if enabled, defaults to true if setting doesn't exist
+ */
+export function isFeatureEnabled(category: string, key: string): boolean {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (!stored) return true; // Default enabled
+
+    const settings = JSON.parse(stored);
+    return settings[category]?.[key] ?? true;
+  } catch {
+    return true; // Default enabled on error
+  }
+}
+
+/**
+ * Reset all settings to defaults.
+ */
+export function resetSettings(): void {
+  try {
+    localStorage.removeItem(SETTINGS_KEY);
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
+ * Clear all BetterLectio data (settings, starred, recents, cache).
+ */
+export function clearAllData(): void {
+  try {
+    // Get all localStorage keys
+    const keys = Object.keys(localStorage);
+
+    // Remove all keys that start with 'il-' (BetterLectio prefix)
+    for (const key of keys) {
+      if (key.startsWith('il-')) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    // Also remove version info
+    localStorage.removeItem('betterlectio_version_info');
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
+ * Check if a setting requires a page reload to take effect.
+ */
+export function requiresReload(category: string, key: string): boolean {
+  const settingPath = `${category}.${key}`;
+  return SETTINGS_REQUIRING_RELOAD.includes(settingPath as typeof SETTINGS_REQUIRING_RELOAD[number]);
+}
+
+/**
+ * Get the dependency for a setting (if any).
+ * @returns The setting path that this setting depends on, or null if no dependency
+ */
+export function getSettingDependency(category: string, key: string): string | null {
+  const settingPath = `${category}.${key}`;
+  return FEATURE_DEPENDENCIES[settingPath] || null;
+}
+
+/**
+ * Check if a setting's dependency is satisfied.
+ */
+export function isDependencySatisfied(category: string, key: string): boolean {
+  const dependency = getSettingDependency(category, key);
+  if (!dependency) return true;
+
+  const [depCategory, depKey] = dependency.split('.');
+  return isFeatureEnabled(depCategory, depKey);
+}
+
+/**
+ * Migrate settings from an older version.
+ * Currently just returns defaults, but can be extended for future migrations.
+ */
+function migrateSettings(old: unknown): FeatureSettings {
+  // For now, just parse with defaults (will fill in any missing fields)
+  // In the future, we can handle specific migrations based on old.version
+  return FeatureSettingsSchema.parse(old);
+}

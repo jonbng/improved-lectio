@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { X, Clock, Star, Users, Search, GraduationCap, School, DoorOpen, Box, UsersRound, LayoutGrid } from 'lucide-react';
 import { PersonCard } from './PersonCard';
 import { getCachedProfile } from '../lib/profile-cache';
+import { getSettings } from '../lib/settings-storage';
 import {
   getStarredPeople,
   getRecentPeople,
@@ -312,10 +313,13 @@ export function FindSkemaPage({ schoolId, searchType = 'all' }: FindSkemaPagePro
     return starred.filter(s => activeFilters.has(s.type));
   }, [starred, activeFilters]);
 
+  // Get settings for data features
+  const settings = getSettings();
+
   // Determine which sections to show
   const showSearchResults = query.length >= 2;
-  const showRecents = !showSearchResults && filteredRecents.length > 0;
-  const showStarred = !showSearchResults && filteredStarred.length > 0;
+  const showRecents = !showSearchResults && filteredRecents.length > 0 && settings.data.recentSearches;
+  const showStarred = !showSearchResults && filteredStarred.length > 0 && settings.data.starredPeople;
   const showClassmates = !showSearchResults && classmates.length > 0 && activeFilters.has('S');
 
   return (

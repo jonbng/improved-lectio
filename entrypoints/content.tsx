@@ -4,6 +4,7 @@ import { FindSkemaPage } from '@/components/FindSkemaPage';
 import { ViewingScheduleHeader } from '@/components/ViewingScheduleHeader';
 import { ForsideGreeting } from '@/components/ForsideGreeting';
 import { MembersPage, parseMembersFromDOM } from '@/components/MembersPage';
+import { Toaster } from '@/components/ui/sonner';
 import {
   SidebarProvider,
   SidebarInset,
@@ -11,6 +12,7 @@ import {
 import { initPreloading } from '@/lib/preload';
 import { updateProfileCache, updateLoginState, getCachedProfile, extractViewedEntity, isViewingOwnPage, getViewedEntityId } from '@/lib/profile-cache';
 import { updatePageTitle, observeTitleChanges } from '@/lib/page-titles';
+import { getSettings } from '@/lib/settings-storage';
 import '@/styles/globals.css';
 
 export default defineContentScript({
@@ -70,6 +72,7 @@ function DashboardLayout() {
       <SidebarInset>
         <div id="il-lectio-content" className="flex-1 overflow-auto" />
       </SidebarInset>
+      <Toaster position="bottom-right" />
     </SidebarProvider>
   );
 }
@@ -108,8 +111,13 @@ function initLayout() {
     return;
   }
 
+  // Get settings for feature checks
+  const settings = getSettings();
+
   // Redirect messages page to "Nyeste" folder by default
-  if (window.location.pathname.includes('beskeder2.aspx') && !window.location.search.includes('mappeid')) {
+  if (settings.behavior.messagesAutoRedirect &&
+      window.location.pathname.includes('beskeder2.aspx') &&
+      !window.location.search.includes('mappeid')) {
     window.location.href = window.location.pathname + '?mappeid=-70';
     return;
   }
@@ -119,7 +127,9 @@ function initLayout() {
   updateProfileCache();
 
   // Update page title to cleaner format
-  updatePageTitle();
+  if (settings.visual.cleanPageTitles) {
+    updatePageTitle();
+  }
 
   // Set cached profile data on window for AppSidebar to use
   const cachedProfile = getCachedProfile();
@@ -139,7 +149,9 @@ function initLayout() {
   }
 
   // Replace Lectio's favicon with our logo
-  replaceFavicon();
+  if (settings.visual.customFavicon) {
+    replaceFavicon();
+  }
 
   // Inject Geist font
   injectFont();
@@ -183,25 +195,30 @@ function initLayout() {
       // Initialize preloading for faster navigation
       const schoolId = window.location.pathname.match(/\/lectio\/(\d+)\//)?.[1];
       if (schoolId) {
-        initPreloading(schoolId);
+        if (settings.behavior.preloading) {
+          initPreloading(schoolId);
+        }
 
         // Inject FindSkema page
-        if (window.location.pathname.toLowerCase().includes('findskema.aspx')) {
+        if (settings.pages.findSkemaRedesign &&
+            window.location.pathname.toLowerCase().includes('findskema.aspx')) {
           injectFindSkemaPage(schoolId);
         }
 
         // Inject greeting on forside page
-        if (window.location.pathname.toLowerCase().includes('forside.aspx')) {
+        if (settings.pages.forsideRedesign &&
+            window.location.pathname.toLowerCase().includes('forside.aspx')) {
           injectForsideGreeting();
         }
 
         // Inject members page UI
-        if (window.location.pathname.toLowerCase().includes('members.aspx')) {
+        if (settings.pages.membersPageCards &&
+            window.location.pathname.toLowerCase().includes('members.aspx')) {
           injectMembersPage(schoolId);
         }
 
         // Inject "viewing schedule" header when looking at someone else's schedule
-        if (!isViewingOwnPage()) {
+        if (settings.schedule.viewingScheduleHeader && !isViewingOwnPage()) {
           injectViewingScheduleHeader(schoolId);
 
           // Add body class for entity schedules (non-person types like hold, class, room)
@@ -214,12 +231,18 @@ function initLayout() {
       }
 
       // Set up title observer for dynamic updates (e.g., unread message count)
-      observeTitleChanges();
+      if (settings.visual.cleanPageTitles) {
+        observeTitleChanges();
+      }
 
       // Set up schedule table column widths and highlight today
       injectScheduleColgroup();
-      highlightTodayInSchedule();
-      injectCurrentTimeIndicator();
+      if (settings.schedule.todayHighlight) {
+        highlightTodayInSchedule();
+        if (settings.schedule.currentTimeIndicator) {
+          injectCurrentTimeIndicator();
+        }
+      }
 
       // Remove redundant tooltip on activity page title
       removeActivityTitleTooltip();

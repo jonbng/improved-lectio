@@ -54,6 +54,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { clearLoginState } from '@/lib/profile-cache';
+import { getSettings } from '@/lib/settings-storage';
 import { SettingsModal } from './SettingsModal';
 
 function getSchoolIdFromUrl(): string {
@@ -171,21 +172,21 @@ function getUserClass(): string {
 }
 
 const navMain = [
-  { title: 'Forside', icon: Home, page: 'forside' },
-  { title: 'Skema', icon: Calendar, page: 'skemany' },
-  { title: 'Elever', icon: Users, page: 'FindSkema' },
-  { title: 'Opgaver', icon: FileText, page: 'opgaverelev' },
-  { title: 'Lektier', icon: BookOpen, page: 'material_lektieoversigt' },
-  { title: 'Beskeder', icon: MessageSquare, page: 'beskeder2' },
+  { title: 'Forside', icon: Home, page: 'forside', settingKey: 'showForside' as const },
+  { title: 'Skema', icon: Calendar, page: 'skemany', settingKey: 'showSkema' as const },
+  { title: 'Elever', icon: Users, page: 'FindSkema', settingKey: 'showElever' as const },
+  { title: 'Opgaver', icon: FileText, page: 'opgaverelev', settingKey: 'showOpgaver' as const },
+  { title: 'Lektier', icon: BookOpen, page: 'material_lektieoversigt', settingKey: 'showLektier' as const },
+  { title: 'Beskeder', icon: MessageSquare, page: 'beskeder2', settingKey: 'showBeskeder' as const },
 ];
 
 const navSecondary = [
-  { title: 'Karakterer', icon: GraduationCap, page: 'grades/grade_report' },
-  { title: 'Fravær', icon: Clock, page: 'subnav/fravaerelev_fravaersaarsager' },
-  { title: 'Studieplan', icon: ClipboardList, page: 'studieplan' },
-  { title: 'Dokumenter', icon: FolderOpen, page: 'dokumentoversigt' },
-  { title: 'Spørgeskema', icon: HelpCircle, page: 'spoergeskema/spoergeskema_rapport' },
-  { title: 'UV-beskrivelser', icon: BookMarked, page: 'studieplan/uvb_list_off' },
+  { title: 'Karakterer', icon: GraduationCap, page: 'grades/grade_report', settingKey: 'showKarakterer' as const },
+  { title: 'Fravær', icon: Clock, page: 'subnav/fravaerelev_fravaersaarsager', settingKey: 'showFravaer' as const },
+  { title: 'Studieplan', icon: ClipboardList, page: 'studieplan', settingKey: 'showStudieplan' as const },
+  { title: 'Dokumenter', icon: FolderOpen, page: 'dokumentoversigt', settingKey: 'showDokumenter' as const },
+  { title: 'Spørgeskema', icon: HelpCircle, page: 'spoergeskema/spoergeskema_rapport', settingKey: 'showSpoergeskema' as const },
+  { title: 'UV-beskrivelser', icon: BookMarked, page: 'studieplan/uvb_list_off', settingKey: 'showUVBeskrivelser' as const },
 ];
 
 const findSkemaItems = [
@@ -211,6 +212,14 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Get settings for sidebar visibility
+  const settings = getSettings();
+  const sidebarSettings = settings.sidebar;
+
+  // Filter nav items based on settings
+  const visibleNavMain = navMain.filter(item => sidebarSettings[item.settingKey]);
+  const visibleNavSecondary = navSecondary.filter(item => sidebarSettings[item.settingKey]);
 
   // Get logo URL at render time when browser context is available
   const logoUrl = browser.runtime.getURL('/assets/logo-transparent.svg');
@@ -284,7 +293,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup className="py-2">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {navMain.map((item) => (
+              {visibleNavMain.map((item) => (
                 <SidebarMenuItem key={item.page}>
                   <SidebarMenuButton asChild isActive={isActive(item.page)} tooltip={item.title} className="text-[1rem]! py-2.5! h-auto! rounded-lg! data-[active=true]:bg-sidebar-accent! data-[active=true]:font-medium!">
                     <a href={`${baseUrl}/${item.page}.aspx`}>
@@ -304,7 +313,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel className="text-[0.9rem]! font-semibold! text-muted-foreground! px-3 mb-1.5">Mere</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {navSecondary.map((item) => (
+              {visibleNavSecondary.map((item) => (
                 <SidebarMenuItem key={item.page}>
                   <SidebarMenuButton asChild isActive={isActive(item.page)} tooltip={item.title} className="text-[1rem]! py-2.5! h-auto! rounded-lg! data-[active=true]:bg-sidebar-accent! data-[active=true]:font-medium!">
                     <a href={`${baseUrl}/${item.page}.aspx`}>
@@ -320,73 +329,79 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
         <SidebarSeparator className="my-2 opacity-50" />
 
-        <SidebarGroup className="py-2">
-          <SidebarGroupLabel className="text-[0.9rem]! font-semibold! text-muted-foreground! px-3 mb-1.5">Skemaer</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5">
-              {/* Find Skema collapsible */}
-              <Collapsible open={findSkemaOpen} onOpenChange={setFindSkemaOpen} className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip="Find Skema" className="text-[1rem]! py-2.5! h-auto! rounded-lg!">
-                      <FileSearch className="size-5! opacity-80" />
-                      <span>Find Skema</span>
-                      <ChevronRight className="ml-auto size-4 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub className="ml-4 mt-1 border-l-0 pl-4">
-                      {findSkemaItems.map((item) => (
-                        <SidebarMenuSubItem key={item.type}>
-                          <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
-                            <a href={`${baseUrl}/FindSkema.aspx?type=${item.type}`}>
-                              <item.icon className="size-4 opacity-70" />
-                              <span>{item.title}</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
-                          <a href={`${baseUrl}/FindSkemaAdv.aspx`}>
-                            <Search className="size-4 opacity-70" />
-                            <span>Avanceret</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+        {(sidebarSettings.showFindSkema || sidebarSettings.showAendringer) && (
+          <SidebarGroup className="py-2">
+            <SidebarGroupLabel className="text-[0.9rem]! font-semibold! text-muted-foreground! px-3 mb-1.5">Skemaer</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {/* Find Skema collapsible */}
+                {sidebarSettings.showFindSkema && (
+                  <Collapsible open={findSkemaOpen} onOpenChange={setFindSkemaOpen} className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip="Find Skema" className="text-[1rem]! py-2.5! h-auto! rounded-lg!">
+                          <FileSearch className="size-5! opacity-80" />
+                          <span>Find Skema</span>
+                          <ChevronRight className="ml-auto size-4 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub className="ml-4 mt-1 border-l-0 pl-4">
+                          {findSkemaItems.map((item) => (
+                            <SidebarMenuSubItem key={item.type}>
+                              <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
+                                <a href={`${baseUrl}/FindSkema.aspx?type=${item.type}`}>
+                                  <item.icon className="size-4 opacity-70" />
+                                  <span>{item.title}</span>
+                                </a>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
+                              <a href={`${baseUrl}/FindSkemaAdv.aspx`}>
+                                <Search className="size-4 opacity-70" />
+                                <span>Avanceret</span>
+                              </a>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )}
 
-              {/* Calendar views collapsible */}
-              <Collapsible open={calendarOpen} onOpenChange={setCalendarOpen} className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip="Kalendervisninger" className="text-[1rem]! py-2.5! h-auto! rounded-lg!">
-                      <CalendarDays className="size-5! opacity-80" />
-                      <span>Ændringer</span>
-                      <ChevronRight className="ml-auto size-4 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub className="ml-4 mt-1 border-l-0 pl-4">
-                      {calendarItems.map((item) => (
-                        <SidebarMenuSubItem key={item.page}>
-                          <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
-                            <a href={`${baseUrl}/${item.page}.aspx`}>
-                              <span>{item.title}</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                {/* Calendar views collapsible */}
+                {sidebarSettings.showAendringer && (
+                  <Collapsible open={calendarOpen} onOpenChange={setCalendarOpen} className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip="Kalendervisninger" className="text-[1rem]! py-2.5! h-auto! rounded-lg!">
+                          <CalendarDays className="size-5! opacity-80" />
+                          <span>Ændringer</span>
+                          <ChevronRight className="ml-auto size-4 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub className="ml-4 mt-1 border-l-0 pl-4">
+                          {calendarItems.map((item) => (
+                            <SidebarMenuSubItem key={item.page}>
+                              <SidebarMenuSubButton asChild className="py-2! text-[0.9rem]! rounded-lg!">
+                                <a href={`${baseUrl}/${item.page}.aspx`}>
+                                  <span>{item.title}</span>
+                                </a>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3">

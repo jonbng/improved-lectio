@@ -5,6 +5,19 @@
 import '@/styles/hide-flash.css';
 
 const LOGIN_STATE_KEY = 'il-login-state';
+const SETTINGS_KEY = 'il-feature-settings';
+
+function isFoucPreventionEnabled(): boolean {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (!stored) return true; // Default to enabled
+    const settings = JSON.parse(stored);
+    // Navigate to visual.foucPrevention, default to true
+    return settings?.visual?.foucPrevention ?? true;
+  } catch {
+    return true; // Default to enabled on error
+  }
+}
 
 interface LoginState {
   isLoggedIn: boolean;
@@ -58,6 +71,12 @@ export default defineContentScript({
 
     // Skip for login pages - they have their own UI, don't hide
     if (isLoginPage()) {
+      document.documentElement.classList.add('il-ready');
+      return;
+    }
+
+    // Check if FOUC prevention is disabled in settings
+    if (!isFoucPreventionEnabled()) {
       document.documentElement.classList.add('il-ready');
       return;
     }

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { createPortal } from "preact/compat";
 import { browser } from "wxt/browser";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sidebar,
   SidebarContent,
@@ -22,18 +22,30 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { FeatureToggle } from "@/components/settings/FeatureToggle";
+import { SettingsSection } from "@/components/settings/SettingsSection";
+import {
+  getSettings,
+  saveSettings,
+  resetSettings,
+  clearAllData,
+  requiresReload,
+  type FeatureSettings,
+} from "@/lib/settings-storage";
+import { clearPictureCache, getStarredPeople, getRecentPeople } from "@/lib/findskema-storage";
 import {
   Info,
   Github,
   Bug,
   Palette,
-  Bell,
   Wrench,
   ExternalLink,
   X,
   Chrome,
   Monitor,
   Calendar,
+  PanelLeft,
+  Zap,
 } from "lucide-react";
 
 interface SettingsModalProps {
@@ -43,7 +55,8 @@ interface SettingsModalProps {
 
 const navItems = [
   { id: "appearance", name: "Udseende", icon: Palette },
-  { id: "notifications", name: "Notifikationer", icon: Bell },
+  { id: "behavior", name: "Adfærd", icon: Zap },
+  { id: "sidebar", name: "Sidebar", icon: PanelLeft },
   { id: "advanced", name: "Avanceret", icon: Wrench },
   { id: "about", name: "Om", icon: Info },
 ];
@@ -61,11 +74,9 @@ function getVersionInfo(currentVersion: string): VersionInfo {
     const stored = localStorage.getItem(VERSION_STORAGE_KEY);
     if (stored) {
       const info = JSON.parse(stored);
-      // Migrate from old format if needed
       const firstInstalledAt = info.firstInstalledAt || info.installedAt || new Date().toISOString();
 
       if (info.version === currentVersion) {
-        // Same version, return existing info
         return {
           version: currentVersion,
           firstInstalledAt,
@@ -73,7 +84,6 @@ function getVersionInfo(currentVersion: string): VersionInfo {
         };
       }
 
-      // Version changed - update lastUpdatedAt but keep firstInstalledAt
       const updatedInfo: VersionInfo = {
         version: currentVersion,
         firstInstalledAt,
@@ -86,7 +96,6 @@ function getVersionInfo(currentVersion: string): VersionInfo {
     // Ignore parse errors
   }
 
-  // First install
   const now = new Date().toISOString();
   const newInfo: VersionInfo = {
     version: currentVersion,
@@ -151,11 +160,19 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState("appearance");
   const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null);
+  const [settings, setSettings] = useState<FeatureSettings>(() => getSettings());
 
   // Get version info on mount
   useEffect(() => {
     setVersionInfo(getVersionInfo(version));
   }, [version]);
+
+  // Reload settings when modal opens
+  useEffect(() => {
+    if (open) {
+      setSettings(getSettings());
+    }
+  }, [open]);
 
   // Handle escape key and focus trap
   useEffect(() => {
@@ -167,7 +184,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       }
     };
 
-    // Focus the modal content when opened
     contentRef.current?.focus();
 
     document.addEventListener("keydown", handleKeyDown);
@@ -188,19 +204,70 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   if (!open) return null;
 
-  const activeName =
-    navItems.find((item) => item.id === activeSection)?.name ?? "Om";
+  const activeName = navItems.find((item) => item.id === activeSection)?.name ?? "Om";
 
   const browserInfo = getBrowserInfo();
   const osInfo = getOSInfo();
   const screenDimensions = `${window.screen.width} × ${window.screen.height}`;
+
+  const handleSettingChange = <K extends keyof Omit<FeatureSettings, 'version'>>(
+    category: K,
+    key: keyof FeatureSettings[K],
+    value: boolean
+  ) => {
+    const newSettings = { ...settings };
+    (newSettings[category] as Record<string, boolean>)[key as string] = value;
+    setSettings(newSettings);
+    saveSettings(newSettings);
+
+    // Show reload toast if this setting requires it
+    if (requiresReload(category, key as string)) {
+      toast("Indstillingen træder i kraft efter genindlæsning", {
+        action: {
+          label: "Genindlæs",
+          onClick: () => window.location.reload(),
+        },
+        duration: 5000,
+      });
+    }
+  };
+
+  const handleClearPictureCache = () => {
+    clearPictureCache();
+    toast.success("Billedcache ryddet");
+  };
+
+  const handleClearAllData = () => {
+    clearAllData();
+    setSettings(getSettings());
+    toast.success("Alle data ryddet", {
+      action: {
+        label: "Genindlæs",
+        onClick: () => window.location.reload(),
+      },
+    });
+  };
+
+  const handleResetSettings = () => {
+    resetSettings();
+    setSettings(getSettings());
+    toast.success("Indstillinger nulstillet", {
+      action: {
+        label: "Genindlæs",
+        onClick: () => window.location.reload(),
+      },
+    });
+  };
+
+  // Get data counts for display
+  const starredCount = getStarredPeople().length;
+  const recentsCount = getRecentPeople().length;
 
   const renderContent = () => {
     switch (activeSection) {
       case "about":
         return (
           <div className="space-y-8">
-            {/* Hero section with logo and name */}
             <div className="flex items-center justify-center gap-2">
               <img
                 src={logoUrl}
@@ -214,7 +281,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </h1>
             </div>
 
-            {/* Version and info cards */}
             <div className="grid gap-3">
               <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
@@ -258,7 +324,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               )}
             </div>
 
-            {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
               <a
                 href="https://chromewebstore.google.com/detail/betterlectio/dkfapbjhgiepdijkpfabekbnepiomahj"
@@ -292,7 +357,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </a>
             </div>
 
-            {/* Debug info section */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 Debug info
@@ -328,7 +392,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </div>
             </div>
 
-            {/* Credits */}
             <p className="text-sm text-muted-foreground">
               Udviklet af{" "}
               <a
@@ -345,92 +408,331 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
       case "appearance":
         return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Tema</Label>
-                <p className="text-sm text-muted-foreground">
-                  Vælg mellem lyst og mørkt tema
-                </p>
-              </div>
-              <Badge variant="outline">Kommer snart</Badge>
-            </div>
+          <div className="space-y-6">
+            <SettingsSection title="Visuelle funktioner">
+              <FeatureToggle
+                id="visual-favicon"
+                label="BetterLectio favicon"
+                description="Erstat Lectios favicon med BetterLectio logoet"
+                enabled={settings.visual.customFavicon}
+                onChange={(v) => handleSettingChange('visual', 'customFavicon', v)}
+              />
+              <FeatureToggle
+                id="visual-titles"
+                label="Rene sidetitler"
+                description="Moderne sidetitler med ulæste beskeder badge"
+                enabled={settings.visual.cleanPageTitles}
+                onChange={(v) => handleSettingChange('visual', 'cleanPageTitles', v)}
+              />
+              <FeatureToggle
+                id="visual-fouc"
+                label="Skelet-indlæsning"
+                description="Vis skelet-animation mens siden indlæses"
+                enabled={settings.visual.foucPrevention}
+                onChange={(v) => handleSettingChange('visual', 'foucPrevention', v)}
+                requiresReload
+              />
+            </SettingsSection>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Accentfarve</Label>
-                <p className="text-sm text-muted-foreground">
-                  Tilpas udvidelsens farvetema
-                </p>
-              </div>
-              <Badge variant="outline">Kommer snart</Badge>
-            </div>
+            <SettingsSection title="Skema funktioner">
+              <FeatureToggle
+                id="schedule-today"
+                label="Fremhæv i dag"
+                description="Gul baggrund på dagens kolonne i skemaet"
+                enabled={settings.schedule.todayHighlight}
+                onChange={(v) => handleSettingChange('schedule', 'todayHighlight', v)}
+                hasDependent={settings.schedule.currentTimeIndicator}
+              />
+              <FeatureToggle
+                id="schedule-time"
+                label="Tidsindikator"
+                description="Rød linje der viser det aktuelle tidspunkt"
+                enabled={settings.schedule.currentTimeIndicator}
+                onChange={(v) => handleSettingChange('schedule', 'currentTimeIndicator', v)}
+                disabled={!settings.schedule.todayHighlight}
+                disabledReason="Kræver 'Fremhæv i dag' er aktiveret"
+              />
+              <FeatureToggle
+                id="schedule-viewing"
+                label="Visningshoved"
+                description="Viser hvem skemaet tilhører når du ser andres skemaer"
+                enabled={settings.schedule.viewingScheduleHeader}
+                onChange={(v) => handleSettingChange('schedule', 'viewingScheduleHeader', v)}
+              />
+            </SettingsSection>
+
+            <SettingsSection title="Sideredesigns">
+              <FeatureToggle
+                id="pages-findskema"
+                label="FindSkema redesign"
+                description="Fuzzy søgning, filtre, personkort og favoritter"
+                enabled={settings.pages.findSkemaRedesign}
+                onChange={(v) => handleSettingChange('pages', 'findSkemaRedesign', v)}
+                hasDependent={settings.data.starredPeople || settings.data.recentSearches}
+              />
+              <FeatureToggle
+                id="pages-forside"
+                label="Forside redesign"
+                description="Hilsen, live ur og masonry kortlayout"
+                enabled={settings.pages.forsideRedesign}
+                onChange={(v) => handleSettingChange('pages', 'forsideRedesign', v)}
+              />
+              <FeatureToggle
+                id="pages-members"
+                label="Medlemsliste kort"
+                description="Viser hold/klasse medlemmer som kort i stedet for tabel"
+                enabled={settings.pages.membersPageCards}
+                onChange={(v) => handleSettingChange('pages', 'membersPageCards', v)}
+              />
+              <FeatureToggle
+                id="pages-login"
+                label="Login side redesign"
+                description="Moderne skolevalg med søgning"
+                enabled={settings.pages.loginPageRedesign}
+                onChange={(v) => handleSettingChange('pages', 'loginPageRedesign', v)}
+                requiresReload
+              />
+            </SettingsSection>
           </div>
         );
 
-      case "notifications":
+      case "behavior":
         return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Nye beskeder</Label>
-                <p className="text-sm text-muted-foreground">
-                  Få notifikationer om nye beskeder
-                </p>
-              </div>
-              <Checkbox disabled />
-            </div>
+          <div className="space-y-6">
+            <SettingsSection title="Adfærd">
+              <FeatureToggle
+                id="behavior-session"
+                label="Bloker session popup"
+                description="Forhindrer 'Din session udløber snart' popup"
+                enabled={settings.behavior.sessionPopupBlocker}
+                onChange={(v) => handleSettingChange('behavior', 'sessionPopupBlocker', v)}
+                requiresReload
+              />
+              <FeatureToggle
+                id="behavior-forside"
+                label="Omdiriger til forside"
+                description="Omdiriger fra default.aspx til forside.aspx"
+                enabled={settings.behavior.autoRedirectForside}
+                onChange={(v) => handleSettingChange('behavior', 'autoRedirectForside', v)}
+                requiresReload
+              />
+              <FeatureToggle
+                id="behavior-messages"
+                label="Beskeder til Nyeste"
+                description="Åbn beskeder i 'Nyeste' mappe som standard"
+                enabled={settings.behavior.messagesAutoRedirect}
+                onChange={(v) => handleSettingChange('behavior', 'messagesAutoRedirect', v)}
+              />
+              <FeatureToggle
+                id="behavior-lastschool"
+                label="Fortsæt til sidst brugte skole"
+                description="Vis knap til hurtigt login på login-siden"
+                enabled={settings.behavior.continueToLastSchool}
+                onChange={(v) => handleSettingChange('behavior', 'continueToLastSchool', v)}
+              />
+            </SettingsSection>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Skemaændringer</Label>
-                <p className="text-sm text-muted-foreground">
-                  Få notifikationer om ændringer i dit skema
-                </p>
-              </div>
-              <Checkbox disabled />
-            </div>
+            <SettingsSection title="Ydeevne">
+              <FeatureToggle
+                id="behavior-preload"
+                label="Forudindlæsning"
+                description="Forudindlæs sider ved hover for hurtigere navigation"
+                enabled={settings.behavior.preloading}
+                onChange={(v) => handleSettingChange('behavior', 'preloading', v)}
+              />
+            </SettingsSection>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Nye opgaver</Label>
-                <p className="text-sm text-muted-foreground">
-                  Få notifikationer om nye opgaver
-                </p>
-              </div>
-              <Checkbox disabled />
-            </div>
+            <SettingsSection title="Data">
+              <FeatureToggle
+                id="data-starred"
+                label="Favoritter"
+                description={`Gem favorit-personer til hurtig adgang (${starredCount} gemt)`}
+                enabled={settings.data.starredPeople}
+                onChange={(v) => handleSettingChange('data', 'starredPeople', v)}
+                disabled={!settings.pages.findSkemaRedesign}
+                disabledReason="Kræver FindSkema redesign er aktiveret"
+              />
+              <FeatureToggle
+                id="data-recents"
+                label="Seneste søgninger"
+                description={`Husk dine seneste søgninger (${recentsCount} gemt)`}
+                enabled={settings.data.recentSearches}
+                onChange={(v) => handleSettingChange('data', 'recentSearches', v)}
+                disabled={!settings.pages.findSkemaRedesign}
+                disabledReason="Kræver FindSkema redesign er aktiveret"
+              />
+            </SettingsSection>
+          </div>
+        );
 
-            <p className="text-xs text-muted-foreground pt-2">
-              Notifikationer er ikke tilgængelige endnu.
-            </p>
+      case "sidebar":
+        return (
+          <div className="space-y-6">
+            <SettingsSection title="Hovedmenu" description="Vælg hvilke links der vises i hovedmenuen">
+              <FeatureToggle
+                id="sidebar-forside"
+                label="Forside"
+                description="Link til forsiden"
+                enabled={settings.sidebar.showForside}
+                onChange={(v) => handleSettingChange('sidebar', 'showForside', v)}
+              />
+              <FeatureToggle
+                id="sidebar-skema"
+                label="Skema"
+                description="Link til dit skema"
+                enabled={settings.sidebar.showSkema}
+                onChange={(v) => handleSettingChange('sidebar', 'showSkema', v)}
+              />
+              <FeatureToggle
+                id="sidebar-elever"
+                label="Elever"
+                description="Link til elevoversigt"
+                enabled={settings.sidebar.showElever}
+                onChange={(v) => handleSettingChange('sidebar', 'showElever', v)}
+              />
+              <FeatureToggle
+                id="sidebar-opgaver"
+                label="Opgaver"
+                description="Link til opgaveoversigt"
+                enabled={settings.sidebar.showOpgaver}
+                onChange={(v) => handleSettingChange('sidebar', 'showOpgaver', v)}
+              />
+              <FeatureToggle
+                id="sidebar-lektier"
+                label="Lektier"
+                description="Link til lektieoversigt"
+                enabled={settings.sidebar.showLektier}
+                onChange={(v) => handleSettingChange('sidebar', 'showLektier', v)}
+              />
+              <FeatureToggle
+                id="sidebar-beskeder"
+                label="Beskeder"
+                description="Link til beskeder"
+                enabled={settings.sidebar.showBeskeder}
+                onChange={(v) => handleSettingChange('sidebar', 'showBeskeder', v)}
+              />
+            </SettingsSection>
+
+            <SettingsSection title="Sekundær menu" description="Vælg hvilke links der vises i den sekundære menu">
+              <FeatureToggle
+                id="sidebar-karakterer"
+                label="Karakterer"
+                description="Link til karakteroversigt"
+                enabled={settings.sidebar.showKarakterer}
+                onChange={(v) => handleSettingChange('sidebar', 'showKarakterer', v)}
+              />
+              <FeatureToggle
+                id="sidebar-fravaer"
+                label="Fravær"
+                description="Link til fraværsoversigt"
+                enabled={settings.sidebar.showFravaer}
+                onChange={(v) => handleSettingChange('sidebar', 'showFravaer', v)}
+              />
+              <FeatureToggle
+                id="sidebar-studieplan"
+                label="Studieplan"
+                description="Link til studieplan"
+                enabled={settings.sidebar.showStudieplan}
+                onChange={(v) => handleSettingChange('sidebar', 'showStudieplan', v)}
+              />
+              <FeatureToggle
+                id="sidebar-dokumenter"
+                label="Dokumenter"
+                description="Link til dokumenter"
+                enabled={settings.sidebar.showDokumenter}
+                onChange={(v) => handleSettingChange('sidebar', 'showDokumenter', v)}
+              />
+              <FeatureToggle
+                id="sidebar-spoergeskema"
+                label="Spørgeskema"
+                description="Link til spørgeskemaer"
+                enabled={settings.sidebar.showSpoergeskema}
+                onChange={(v) => handleSettingChange('sidebar', 'showSpoergeskema', v)}
+              />
+              <FeatureToggle
+                id="sidebar-uvbeskrivelser"
+                label="UV-beskrivelser"
+                description="Link til undervisningsbeskrivelser"
+                enabled={settings.sidebar.showUVBeskrivelser}
+                onChange={(v) => handleSettingChange('sidebar', 'showUVBeskrivelser', v)}
+              />
+            </SettingsSection>
+
+            <SettingsSection title="Sektioner" description="Vis eller skjul foldbare sektioner">
+              <FeatureToggle
+                id="sidebar-findskema"
+                label="Find Skema"
+                description="Foldbar sektion med genveje til skematyper"
+                enabled={settings.sidebar.showFindSkema}
+                onChange={(v) => handleSettingChange('sidebar', 'showFindSkema', v)}
+              />
+              <FeatureToggle
+                id="sidebar-aendringer"
+                label="Ændringer"
+                description="Foldbar sektion med skemaændringer"
+                enabled={settings.sidebar.showAendringer}
+                onChange={(v) => handleSettingChange('sidebar', 'showAendringer', v)}
+              />
+            </SettingsSection>
           </div>
         );
 
       case "advanced":
         return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Debug-tilstand</Label>
-                <p className="text-sm text-muted-foreground">
-                  Vis ekstra fejlfindingsinformation
-                </p>
+          <div className="space-y-6">
+            <SettingsSection title="Cache" description="Administrer lokalt gemt data">
+              <div className="flex items-center justify-between py-3 px-4">
+                <div className="space-y-0.5">
+                  <Label className="font-medium">Ryd billedcache</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Slet cachede profilbilleder
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearPictureCache}
+                  className="cursor-pointer"
+                >
+                  Ryd cache
+                </Button>
               </div>
-              <Checkbox disabled />
-            </div>
+              <div className="flex items-center justify-between py-3 px-4">
+                <div className="space-y-0.5">
+                  <Label className="font-medium">Ryd alle data</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Slet favoritter, seneste søgninger, billedcache og indstillinger
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleClearAllData}
+                  className="cursor-pointer"
+                >
+                  Ryd alt
+                </Button>
+              </div>
+            </SettingsSection>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Ryd cache</Label>
-                <p className="text-sm text-muted-foreground">
-                  Slet gemte data og indstillinger
-                </p>
+            <SettingsSection title="Nulstil" description="Gendan standardindstillinger">
+              <div className="flex items-center justify-between py-3 px-4">
+                <div className="space-y-0.5">
+                  <Label className="font-medium">Nulstil indstillinger</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Gendan alle indstillinger til standard (beholder favoritter og søgninger)
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetSettings}
+                  className="cursor-pointer"
+                >
+                  Nulstil
+                </Button>
               </div>
-              <Button variant="outline" size="sm" disabled>
-                Ryd
-              </Button>
-            </div>
+            </SettingsSection>
           </div>
         );
 
@@ -457,7 +759,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       <div
         ref={contentRef}
         tabIndex={-1}
-        className="relative z-10 bg-background w-full max-w-[700px] lg:max-w-[800px] max-h-[85vh] md:max-h-[500px] overflow-hidden rounded-lg border shadow-lg mx-4 animate-in fade-in-0 zoom-in-95 duration-200 outline-none"
+        className="relative z-10 bg-background w-full max-w-[700px] lg:max-w-[800px] max-h-[85vh] md:max-h-[600px] overflow-hidden rounded-lg border shadow-lg mx-4 animate-in fade-in-0 zoom-in-95 duration-200 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -494,7 +796,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             </SidebarContent>
           </Sidebar>
 
-          <main className="flex h-[480px] flex-1 flex-col overflow-hidden">
+          <main className="flex h-[580px] flex-1 flex-col overflow-hidden">
             <header className="flex h-12 shrink-0 items-center gap-2 border-b mt-4">
               <div className="flex items-center gap-2 px-6">
                 <Breadcrumb>

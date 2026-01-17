@@ -1,3 +1,5 @@
+import { getSettings } from './settings-storage';
+
 const STARRED_KEY = 'il-starred-people';
 const RECENTS_KEY = 'il-recent-searches';
 const PICTURE_CACHE_KEY = 'il-picture-cache';
@@ -33,6 +35,10 @@ export function getStarredPeople(): StarredPerson[] {
 }
 
 export function addStarredPerson(person: Omit<StarredPerson, 'starredAt'>): void {
+  // Check if starred people feature is enabled
+  const settings = getSettings();
+  if (!settings.data.starredPeople) return;
+
   try {
     const starred = getStarredPeople().filter(p => p.id !== person.id);
     starred.unshift({ ...person, starredAt: Date.now() });
@@ -76,6 +82,10 @@ export function getRecentPeople(): RecentPerson[] {
 }
 
 export function addRecentPerson(person: Omit<RecentPerson, 'timestamp'>): void {
+  // Check if recent searches feature is enabled
+  const settings = getSettings();
+  if (!settings.data.recentSearches) return;
+
   try {
     const recents = getRecentPeople().filter(p => p.id !== person.id);
     recents.unshift({ ...person, timestamp: Date.now() });

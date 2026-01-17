@@ -2,6 +2,7 @@ import { render } from "preact";
 import { LoginPage, type School } from "@/components/LoginPage";
 import { getCachedLoginState, clearLoginState } from "@/lib/profile-cache";
 import { getLastSchool } from "@/lib/school-storage";
+import { getSettings } from "@/lib/settings-storage";
 import "@/styles/globals.css";
 
 export default defineContentScript({
@@ -84,8 +85,18 @@ async function initLoginPage() {
     return;
   }
 
+  // Get settings
+  const settings = getSettings();
+
+  // Check if login page redesign is disabled
+  if (!settings.pages.loginPageRedesign) {
+    console.log("[BetterLectio] Login page redesign disabled, skipping");
+    return;
+  }
+
   // Check if user is already logged in and should be redirected
-  if (await checkAndRedirectIfLoggedIn()) {
+  // (only if continueToLastSchool is enabled)
+  if (settings.behavior.continueToLastSchool && await checkAndRedirectIfLoggedIn()) {
     return; // Don't render login page, we're redirecting
   }
 
