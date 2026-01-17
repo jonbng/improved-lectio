@@ -3,68 +3,77 @@ import { z } from 'zod';
 const SETTINGS_KEY = 'il-feature-settings';
 const SETTINGS_VERSION = 1;
 
+// Define nested schemas separately so we can use them for defaults
+const VisualSettingsSchema = z.object({
+  customFavicon: z.boolean().default(true),
+  cleanPageTitles: z.boolean().default(true),
+  foucPrevention: z.boolean().default(true), // requires reload
+});
+
+const ScheduleSettingsSchema = z.object({
+  todayHighlight: z.boolean().default(true),
+  currentTimeIndicator: z.boolean().default(true),
+  viewingScheduleHeader: z.boolean().default(true),
+});
+
+const PagesSettingsSchema = z.object({
+  findSkemaRedesign: z.boolean().default(true),
+  forsideRedesign: z.boolean().default(true),
+  membersPageCards: z.boolean().default(true),
+  loginPageRedesign: z.boolean().default(true), // requires reload
+});
+
+const BehaviorSettingsSchema = z.object({
+  sessionPopupBlocker: z.boolean().default(true), // requires reload
+  autoRedirectForside: z.boolean().default(true), // requires reload
+  messagesAutoRedirect: z.boolean().default(true),
+  continueToLastSchool: z.boolean().default(true),
+  preloading: z.boolean().default(true),
+});
+
+// Note: pictureCaching is always enabled to avoid Lectio rate limiting
+const DataSettingsSchema = z.object({
+  starredPeople: z.boolean().default(true),
+  recentSearches: z.boolean().default(true),
+});
+
+const SidebarSettingsSchema = z.object({
+  showForside: z.boolean().default(true),
+  showSkema: z.boolean().default(true),
+  showElever: z.boolean().default(true),
+  showOpgaver: z.boolean().default(true),
+  showLektier: z.boolean().default(true),
+  showBeskeder: z.boolean().default(true),
+  showKarakterer: z.boolean().default(true),
+  showFravaer: z.boolean().default(true),
+  showStudieplan: z.boolean().default(true),
+  showDokumenter: z.boolean().default(true),
+  showSpoergeskema: z.boolean().default(true),
+  showUVBeskrivelser: z.boolean().default(true),
+  showFindSkema: z.boolean().default(true),
+  showAendringer: z.boolean().default(true),
+});
+
+// Default values for each category - needed because Zod doesn't recursively apply defaults
+const DEFAULT_VISUAL = VisualSettingsSchema.parse({});
+const DEFAULT_SCHEDULE = ScheduleSettingsSchema.parse({});
+const DEFAULT_PAGES = PagesSettingsSchema.parse({});
+const DEFAULT_BEHAVIOR = BehaviorSettingsSchema.parse({});
+const DEFAULT_DATA = DataSettingsSchema.parse({});
+const DEFAULT_SIDEBAR = SidebarSettingsSchema.parse({});
+
 /**
  * Feature settings schema with Zod validation.
  * All settings default to true (enabled) for backward compatibility.
  */
 export const FeatureSettingsSchema = z.object({
   version: z.number().default(SETTINGS_VERSION),
-
-  // Visual Features
-  visual: z.object({
-    customFavicon: z.boolean().default(true),
-    cleanPageTitles: z.boolean().default(true),
-    foucPrevention: z.boolean().default(true), // requires reload
-  }).default({}),
-
-  // Schedule Features
-  schedule: z.object({
-    todayHighlight: z.boolean().default(true),
-    currentTimeIndicator: z.boolean().default(true),
-    viewingScheduleHeader: z.boolean().default(true),
-  }).default({}),
-
-  // Page Redesigns
-  pages: z.object({
-    findSkemaRedesign: z.boolean().default(true),
-    forsideRedesign: z.boolean().default(true),
-    membersPageCards: z.boolean().default(true),
-    loginPageRedesign: z.boolean().default(true), // requires reload
-  }).default({}),
-
-  // Behavior Features
-  behavior: z.object({
-    sessionPopupBlocker: z.boolean().default(true), // requires reload
-    autoRedirectForside: z.boolean().default(true), // requires reload
-    messagesAutoRedirect: z.boolean().default(true),
-    continueToLastSchool: z.boolean().default(true),
-    preloading: z.boolean().default(true),
-  }).default({}),
-
-  // Data Features
-  // Note: pictureCaching is always enabled to avoid Lectio rate limiting
-  data: z.object({
-    starredPeople: z.boolean().default(true),
-    recentSearches: z.boolean().default(true),
-  }).default({}),
-
-  // Sidebar Customization
-  sidebar: z.object({
-    showForside: z.boolean().default(true),
-    showSkema: z.boolean().default(true),
-    showElever: z.boolean().default(true),
-    showOpgaver: z.boolean().default(true),
-    showLektier: z.boolean().default(true),
-    showBeskeder: z.boolean().default(true),
-    showKarakterer: z.boolean().default(true),
-    showFravaer: z.boolean().default(true),
-    showStudieplan: z.boolean().default(true),
-    showDokumenter: z.boolean().default(true),
-    showSpoergeskema: z.boolean().default(true),
-    showUVBeskrivelser: z.boolean().default(true),
-    showFindSkema: z.boolean().default(true),
-    showAendringer: z.boolean().default(true),
-  }).default({}),
+  visual: VisualSettingsSchema.default(DEFAULT_VISUAL),
+  schedule: ScheduleSettingsSchema.default(DEFAULT_SCHEDULE),
+  pages: PagesSettingsSchema.default(DEFAULT_PAGES),
+  behavior: BehaviorSettingsSchema.default(DEFAULT_BEHAVIOR),
+  data: DataSettingsSchema.default(DEFAULT_DATA),
+  sidebar: SidebarSettingsSchema.default(DEFAULT_SIDEBAR),
 });
 
 export type FeatureSettings = z.infer<typeof FeatureSettingsSchema>;
@@ -97,7 +106,9 @@ export function getSettings(): FeatureSettings {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (!stored) {
-      return FeatureSettingsSchema.parse({});
+      const defaults = FeatureSettingsSchema.parse({});
+      console.log('[BetterLectio] No settings found, using defaults');
+      return defaults;
     }
 
     const parsed = JSON.parse(stored);
@@ -107,24 +118,29 @@ export function getSettings(): FeatureSettings {
       return migrateSettings(parsed);
     }
 
-    return FeatureSettingsSchema.parse(parsed);
-  } catch {
+    // Parse through Zod to apply defaults for any missing fields
+    const settings = FeatureSettingsSchema.parse(parsed);
+    return settings;
+  } catch (err) {
     // Return defaults on any error
+    console.error('[BetterLectio] Error loading settings, using defaults:', err);
     return FeatureSettingsSchema.parse({});
   }
 }
 
 /**
  * Save settings to localStorage.
- * Merges with existing settings and ensures version is set.
+ * Validates and ensures all defaults are applied before saving.
  */
 export function saveSettings(settings: FeatureSettings): void {
   try {
-    const merged = {
+    // Re-parse through Zod to ensure all fields have valid values
+    // This fills in any missing fields with defaults
+    const validated = FeatureSettingsSchema.parse({
       ...settings,
       version: SETTINGS_VERSION,
-    };
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged));
+    });
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(validated));
   } catch {
     // Ignore storage errors
   }

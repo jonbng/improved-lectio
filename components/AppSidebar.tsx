@@ -215,11 +215,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
   // Get settings for sidebar visibility
   const settings = getSettings();
-  const sidebarSettings = settings.sidebar;
+  const sidebarSettings = settings.sidebar ?? {};
 
-  // Filter nav items based on settings
-  const visibleNavMain = navMain.filter(item => sidebarSettings[item.settingKey]);
-  const visibleNavSecondary = navSecondary.filter(item => sidebarSettings[item.settingKey]);
+  // Filter nav items based on settings (default to true if setting is undefined)
+  const visibleNavMain = navMain.filter(item => sidebarSettings[item.settingKey] ?? true);
+  const visibleNavSecondary = navSecondary.filter(item => sidebarSettings[item.settingKey] ?? true);
 
   // Get logo URL at render time when browser context is available
   const logoUrl = browser.runtime.getURL('/assets/logo-transparent.svg');
@@ -329,13 +329,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
         <SidebarSeparator className="my-2 opacity-50" />
 
-        {(sidebarSettings.showFindSkema || sidebarSettings.showAendringer) && (
+        {((sidebarSettings.showFindSkema ?? true) || (sidebarSettings.showAendringer ?? true)) && (
           <SidebarGroup className="py-2">
             <SidebarGroupLabel className="text-[0.9rem]! font-semibold! text-muted-foreground! px-3 mb-1.5">Skemaer</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {/* Find Skema collapsible */}
-                {sidebarSettings.showFindSkema && (
+                {(sidebarSettings.showFindSkema ?? true) && (
                   <Collapsible open={findSkemaOpen} onOpenChange={setFindSkemaOpen} className="group/collapsible">
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
@@ -372,7 +372,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 )}
 
                 {/* Calendar views collapsible */}
-                {sidebarSettings.showAendringer && (
+                {(sidebarSettings.showAendringer ?? true) && (
                   <Collapsible open={calendarOpen} onOpenChange={setCalendarOpen} className="group/collapsible">
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>

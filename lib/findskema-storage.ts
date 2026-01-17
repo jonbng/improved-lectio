@@ -37,7 +37,7 @@ export function getStarredPeople(): StarredPerson[] {
 export function addStarredPerson(person: Omit<StarredPerson, 'starredAt'>): void {
   // Check if starred people feature is enabled
   const settings = getSettings();
-  if (!settings.data.starredPeople) return;
+  if (!(settings.data?.starredPeople ?? true)) return;
 
   try {
     const starred = getStarredPeople().filter(p => p.id !== person.id);
@@ -84,7 +84,7 @@ export function getRecentPeople(): RecentPerson[] {
 export function addRecentPerson(person: Omit<RecentPerson, 'timestamp'>): void {
   // Check if recent searches feature is enabled
   const settings = getSettings();
-  if (!settings.data.recentSearches) return;
+  if (!(settings.data?.recentSearches ?? true)) return;
 
   try {
     const recents = getRecentPeople().filter(p => p.id !== person.id);

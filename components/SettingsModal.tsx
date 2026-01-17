@@ -215,10 +215,16 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     key: keyof FeatureSettings[K],
     value: boolean
   ) => {
-    const newSettings = { ...settings };
-    (newSettings[category] as Record<string, boolean>)[key as string] = value;
-    setSettings(newSettings);
-    saveSettings(newSettings);
+    // Deep copy to avoid mutation issues
+    const newSettings = {
+      ...settings,
+      [category]: {
+        ...settings[category],
+        [key]: value,
+      },
+    };
+    setSettings(newSettings as FeatureSettings);
+    saveSettings(newSettings as FeatureSettings);
 
     // Show reload toast if this setting requires it
     if (requiresReload(category, key as string)) {
@@ -414,21 +420,21 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="visual-favicon"
                 label="BetterLectio favicon"
                 description="Erstat Lectios favicon med BetterLectio logoet"
-                enabled={settings.visual.customFavicon}
+                enabled={settings.visual?.customFavicon ?? true}
                 onChange={(v) => handleSettingChange('visual', 'customFavicon', v)}
               />
               <FeatureToggle
                 id="visual-titles"
                 label="Rene sidetitler"
                 description="Moderne sidetitler med ulæste beskeder badge"
-                enabled={settings.visual.cleanPageTitles}
+                enabled={settings.visual?.cleanPageTitles ?? true}
                 onChange={(v) => handleSettingChange('visual', 'cleanPageTitles', v)}
               />
               <FeatureToggle
                 id="visual-fouc"
                 label="Skelet-indlæsning"
                 description="Vis skelet-animation mens siden indlæses"
-                enabled={settings.visual.foucPrevention}
+                enabled={settings.visual?.foucPrevention ?? true}
                 onChange={(v) => handleSettingChange('visual', 'foucPrevention', v)}
                 requiresReload
               />
@@ -439,24 +445,24 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="schedule-today"
                 label="Fremhæv i dag"
                 description="Gul baggrund på dagens kolonne i skemaet"
-                enabled={settings.schedule.todayHighlight}
+                enabled={settings.schedule?.todayHighlight ?? true}
                 onChange={(v) => handleSettingChange('schedule', 'todayHighlight', v)}
-                hasDependent={settings.schedule.currentTimeIndicator}
+                hasDependent={settings.schedule?.currentTimeIndicator ?? true}
               />
               <FeatureToggle
                 id="schedule-time"
                 label="Tidsindikator"
                 description="Rød linje der viser det aktuelle tidspunkt"
-                enabled={settings.schedule.currentTimeIndicator}
+                enabled={settings.schedule?.currentTimeIndicator ?? true}
                 onChange={(v) => handleSettingChange('schedule', 'currentTimeIndicator', v)}
-                disabled={!settings.schedule.todayHighlight}
+                disabled={!(settings.schedule?.todayHighlight ?? true)}
                 disabledReason="Kræver 'Fremhæv i dag' er aktiveret"
               />
               <FeatureToggle
                 id="schedule-viewing"
                 label="Visningshoved"
                 description="Viser hvem skemaet tilhører når du ser andres skemaer"
-                enabled={settings.schedule.viewingScheduleHeader}
+                enabled={settings.schedule?.viewingScheduleHeader ?? true}
                 onChange={(v) => handleSettingChange('schedule', 'viewingScheduleHeader', v)}
               />
             </SettingsSection>
@@ -466,29 +472,29 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="pages-findskema"
                 label="FindSkema redesign"
                 description="Fuzzy søgning, filtre, personkort og favoritter"
-                enabled={settings.pages.findSkemaRedesign}
+                enabled={settings.pages?.findSkemaRedesign ?? true}
                 onChange={(v) => handleSettingChange('pages', 'findSkemaRedesign', v)}
-                hasDependent={settings.data.starredPeople || settings.data.recentSearches}
+                hasDependent={(settings.data?.starredPeople ?? true) || (settings.data?.recentSearches ?? true)}
               />
               <FeatureToggle
                 id="pages-forside"
                 label="Forside redesign"
                 description="Hilsen, live ur og masonry kortlayout"
-                enabled={settings.pages.forsideRedesign}
+                enabled={settings.pages?.forsideRedesign ?? true}
                 onChange={(v) => handleSettingChange('pages', 'forsideRedesign', v)}
               />
               <FeatureToggle
                 id="pages-members"
                 label="Medlemsliste kort"
                 description="Viser hold/klasse medlemmer som kort i stedet for tabel"
-                enabled={settings.pages.membersPageCards}
+                enabled={settings.pages?.membersPageCards ?? true}
                 onChange={(v) => handleSettingChange('pages', 'membersPageCards', v)}
               />
               <FeatureToggle
                 id="pages-login"
                 label="Login side redesign"
                 description="Moderne skolevalg med søgning"
-                enabled={settings.pages.loginPageRedesign}
+                enabled={settings.pages?.loginPageRedesign ?? true}
                 onChange={(v) => handleSettingChange('pages', 'loginPageRedesign', v)}
                 requiresReload
               />
@@ -504,7 +510,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="behavior-session"
                 label="Bloker session popup"
                 description="Forhindrer 'Din session udløber snart' popup"
-                enabled={settings.behavior.sessionPopupBlocker}
+                enabled={settings.behavior?.sessionPopupBlocker ?? true}
                 onChange={(v) => handleSettingChange('behavior', 'sessionPopupBlocker', v)}
                 requiresReload
               />
@@ -512,7 +518,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="behavior-forside"
                 label="Omdiriger til forside"
                 description="Omdiriger fra default.aspx til forside.aspx"
-                enabled={settings.behavior.autoRedirectForside}
+                enabled={settings.behavior?.autoRedirectForside ?? true}
                 onChange={(v) => handleSettingChange('behavior', 'autoRedirectForside', v)}
                 requiresReload
               />
@@ -520,14 +526,14 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="behavior-messages"
                 label="Beskeder til Nyeste"
                 description="Åbn beskeder i 'Nyeste' mappe som standard"
-                enabled={settings.behavior.messagesAutoRedirect}
+                enabled={settings.behavior?.messagesAutoRedirect ?? true}
                 onChange={(v) => handleSettingChange('behavior', 'messagesAutoRedirect', v)}
               />
               <FeatureToggle
                 id="behavior-lastschool"
                 label="Fortsæt til sidst brugte skole"
                 description="Vis knap til hurtigt login på login-siden"
-                enabled={settings.behavior.continueToLastSchool}
+                enabled={settings.behavior?.continueToLastSchool ?? true}
                 onChange={(v) => handleSettingChange('behavior', 'continueToLastSchool', v)}
               />
             </SettingsSection>
@@ -537,7 +543,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="behavior-preload"
                 label="Forudindlæsning"
                 description="Forudindlæs sider ved hover for hurtigere navigation"
-                enabled={settings.behavior.preloading}
+                enabled={settings.behavior?.preloading ?? true}
                 onChange={(v) => handleSettingChange('behavior', 'preloading', v)}
               />
             </SettingsSection>
@@ -547,18 +553,18 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="data-starred"
                 label="Favoritter"
                 description={`Gem favorit-personer til hurtig adgang (${starredCount} gemt)`}
-                enabled={settings.data.starredPeople}
+                enabled={settings.data?.starredPeople ?? true}
                 onChange={(v) => handleSettingChange('data', 'starredPeople', v)}
-                disabled={!settings.pages.findSkemaRedesign}
+                disabled={!(settings.pages?.findSkemaRedesign ?? true)}
                 disabledReason="Kræver FindSkema redesign er aktiveret"
               />
               <FeatureToggle
                 id="data-recents"
                 label="Seneste søgninger"
                 description={`Husk dine seneste søgninger (${recentsCount} gemt)`}
-                enabled={settings.data.recentSearches}
+                enabled={settings.data?.recentSearches ?? true}
                 onChange={(v) => handleSettingChange('data', 'recentSearches', v)}
-                disabled={!settings.pages.findSkemaRedesign}
+                disabled={!(settings.pages?.findSkemaRedesign ?? true)}
                 disabledReason="Kræver FindSkema redesign er aktiveret"
               />
             </SettingsSection>
@@ -573,42 +579,42 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="sidebar-forside"
                 label="Forside"
                 description="Link til forsiden"
-                enabled={settings.sidebar.showForside}
+                enabled={settings.sidebar?.showForside ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showForside', v)}
               />
               <FeatureToggle
                 id="sidebar-skema"
                 label="Skema"
                 description="Link til dit skema"
-                enabled={settings.sidebar.showSkema}
+                enabled={settings.sidebar?.showSkema ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showSkema', v)}
               />
               <FeatureToggle
                 id="sidebar-elever"
                 label="Elever"
                 description="Link til elevoversigt"
-                enabled={settings.sidebar.showElever}
+                enabled={settings.sidebar?.showElever ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showElever', v)}
               />
               <FeatureToggle
                 id="sidebar-opgaver"
                 label="Opgaver"
                 description="Link til opgaveoversigt"
-                enabled={settings.sidebar.showOpgaver}
+                enabled={settings.sidebar?.showOpgaver ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showOpgaver', v)}
               />
               <FeatureToggle
                 id="sidebar-lektier"
                 label="Lektier"
                 description="Link til lektieoversigt"
-                enabled={settings.sidebar.showLektier}
+                enabled={settings.sidebar?.showLektier ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showLektier', v)}
               />
               <FeatureToggle
                 id="sidebar-beskeder"
                 label="Beskeder"
                 description="Link til beskeder"
-                enabled={settings.sidebar.showBeskeder}
+                enabled={settings.sidebar?.showBeskeder ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showBeskeder', v)}
               />
             </SettingsSection>
@@ -618,42 +624,42 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="sidebar-karakterer"
                 label="Karakterer"
                 description="Link til karakteroversigt"
-                enabled={settings.sidebar.showKarakterer}
+                enabled={settings.sidebar?.showKarakterer ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showKarakterer', v)}
               />
               <FeatureToggle
                 id="sidebar-fravaer"
                 label="Fravær"
                 description="Link til fraværsoversigt"
-                enabled={settings.sidebar.showFravaer}
+                enabled={settings.sidebar?.showFravaer ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showFravaer', v)}
               />
               <FeatureToggle
                 id="sidebar-studieplan"
                 label="Studieplan"
                 description="Link til studieplan"
-                enabled={settings.sidebar.showStudieplan}
+                enabled={settings.sidebar?.showStudieplan ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showStudieplan', v)}
               />
               <FeatureToggle
                 id="sidebar-dokumenter"
                 label="Dokumenter"
                 description="Link til dokumenter"
-                enabled={settings.sidebar.showDokumenter}
+                enabled={settings.sidebar?.showDokumenter ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showDokumenter', v)}
               />
               <FeatureToggle
                 id="sidebar-spoergeskema"
                 label="Spørgeskema"
                 description="Link til spørgeskemaer"
-                enabled={settings.sidebar.showSpoergeskema}
+                enabled={settings.sidebar?.showSpoergeskema ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showSpoergeskema', v)}
               />
               <FeatureToggle
                 id="sidebar-uvbeskrivelser"
                 label="UV-beskrivelser"
                 description="Link til undervisningsbeskrivelser"
-                enabled={settings.sidebar.showUVBeskrivelser}
+                enabled={settings.sidebar?.showUVBeskrivelser ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showUVBeskrivelser', v)}
               />
             </SettingsSection>
@@ -663,14 +669,14 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 id="sidebar-findskema"
                 label="Find Skema"
                 description="Foldbar sektion med genveje til skematyper"
-                enabled={settings.sidebar.showFindSkema}
+                enabled={settings.sidebar?.showFindSkema ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showFindSkema', v)}
               />
               <FeatureToggle
                 id="sidebar-aendringer"
                 label="Ændringer"
                 description="Foldbar sektion med skemaændringer"
-                enabled={settings.sidebar.showAendringer}
+                enabled={settings.sidebar?.showAendringer ?? true}
                 onChange={(v) => handleSettingChange('sidebar', 'showAendringer', v)}
               />
             </SettingsSection>

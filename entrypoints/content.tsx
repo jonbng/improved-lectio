@@ -115,7 +115,7 @@ function initLayout() {
   const settings = getSettings();
 
   // Redirect messages page to "Nyeste" folder by default
-  if (settings.behavior.messagesAutoRedirect &&
+  if ((settings.behavior.messagesAutoRedirect ?? true) &&
       window.location.pathname.includes('beskeder2.aspx') &&
       !window.location.search.includes('mappeid')) {
     window.location.href = window.location.pathname + '?mappeid=-70';
@@ -127,7 +127,7 @@ function initLayout() {
   updateProfileCache();
 
   // Update page title to cleaner format
-  if (settings.visual.cleanPageTitles) {
+  if (settings.visual.cleanPageTitles ?? true) {
     updatePageTitle();
   }
 
@@ -149,7 +149,7 @@ function initLayout() {
   }
 
   // Replace Lectio's favicon with our logo
-  if (settings.visual.customFavicon) {
+  if (settings.visual.customFavicon ?? true) {
     replaceFavicon();
   }
 
@@ -195,30 +195,30 @@ function initLayout() {
       // Initialize preloading for faster navigation
       const schoolId = window.location.pathname.match(/\/lectio\/(\d+)\//)?.[1];
       if (schoolId) {
-        if (settings.behavior.preloading) {
+        if (settings.behavior.preloading ?? true) {
           initPreloading(schoolId);
         }
 
         // Inject FindSkema page
-        if (settings.pages.findSkemaRedesign &&
+        if ((settings.pages.findSkemaRedesign ?? true) &&
             window.location.pathname.toLowerCase().includes('findskema.aspx')) {
           injectFindSkemaPage(schoolId);
         }
 
         // Inject greeting on forside page
-        if (settings.pages.forsideRedesign &&
+        if ((settings.pages.forsideRedesign ?? true) &&
             window.location.pathname.toLowerCase().includes('forside.aspx')) {
           injectForsideGreeting();
         }
 
         // Inject members page UI
-        if (settings.pages.membersPageCards &&
+        if ((settings.pages.membersPageCards ?? true) &&
             window.location.pathname.toLowerCase().includes('members.aspx')) {
           injectMembersPage(schoolId);
         }
 
         // Inject "viewing schedule" header when looking at someone else's schedule
-        if (settings.schedule.viewingScheduleHeader && !isViewingOwnPage()) {
+        if ((settings.schedule.viewingScheduleHeader ?? true) && !isViewingOwnPage()) {
           injectViewingScheduleHeader(schoolId);
 
           // Add body class for entity schedules (non-person types like hold, class, room)
@@ -231,15 +231,15 @@ function initLayout() {
       }
 
       // Set up title observer for dynamic updates (e.g., unread message count)
-      if (settings.visual.cleanPageTitles) {
+      if (settings.visual.cleanPageTitles ?? true) {
         observeTitleChanges();
       }
 
       // Set up schedule table column widths and highlight today
       injectScheduleColgroup();
-      if (settings.schedule.todayHighlight) {
+      if (settings.schedule.todayHighlight ?? true) {
         highlightTodayInSchedule();
-        if (settings.schedule.currentTimeIndicator) {
+        if (settings.schedule.currentTimeIndicator ?? true) {
           injectCurrentTimeIndicator();
         }
       }

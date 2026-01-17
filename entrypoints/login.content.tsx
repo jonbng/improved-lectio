@@ -89,14 +89,14 @@ async function initLoginPage() {
   const settings = getSettings();
 
   // Check if login page redesign is disabled
-  if (!settings.pages.loginPageRedesign) {
+  if (!(settings.pages?.loginPageRedesign ?? true)) {
     console.log("[BetterLectio] Login page redesign disabled, skipping");
     return;
   }
 
   // Check if user is already logged in and should be redirected
   // (only if continueToLastSchool is enabled)
-  if (settings.behavior.continueToLastSchool && await checkAndRedirectIfLoggedIn()) {
+  if ((settings.behavior?.continueToLastSchool ?? true) && await checkAndRedirectIfLoggedIn()) {
     return; // Don't render login page, we're redirecting
   }
 
