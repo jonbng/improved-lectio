@@ -1,35 +1,39 @@
-import { render } from 'preact';
-import { AppSidebar } from '@/components/AppSidebar';
-import { FindSkemaPage } from '@/components/FindSkemaPage';
-import { ViewingScheduleHeader } from '@/components/ViewingScheduleHeader';
-import { ForsideGreeting } from '@/components/ForsideGreeting';
-import { MembersPage, parseMembersFromDOM } from '@/components/MembersPage';
-import { Toaster } from '@/components/ui/sonner';
+import { render } from "preact";
+import { AppSidebar } from "@/components/AppSidebar";
+import { FindSkemaPage } from "@/components/FindSkemaPage";
+import { ViewingScheduleHeader } from "@/components/ViewingScheduleHeader";
+import { ForsideGreeting } from "@/components/ForsideGreeting";
+import { MembersPage, parseMembersFromDOM } from "@/components/MembersPage";
+import { Toaster } from "@/components/ui/sonner";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { initPreloading } from "@/lib/preload";
 import {
-  SidebarProvider,
-  SidebarInset,
-} from '@/components/ui/sidebar';
-import { initPreloading } from '@/lib/preload';
-import { updateProfileCache, updateLoginState, getCachedProfile, extractViewedEntity, isViewingOwnPage, getViewedEntityId } from '@/lib/profile-cache';
-import { updatePageTitle, observeTitleChanges } from '@/lib/page-titles';
-import { getSettings } from '@/lib/settings-storage';
-import '@/styles/globals.css';
+  updateProfileCache,
+  updateLoginState,
+  getCachedProfile,
+  extractViewedEntity,
+  isViewingOwnPage,
+  getViewedEntityId,
+} from "@/lib/profile-cache";
+import { updatePageTitle, observeTitleChanges } from "@/lib/page-titles";
+import { getSettings } from "@/lib/settings-storage";
+import "@/styles/globals.css";
 
 export default defineContentScript({
-  matches: ['*://*.lectio.dk/*'],
+  matches: ["*://*.lectio.dk/*"],
   main() {
-    console.log('[BetterLectio] Content script loaded');
+    console.log("[BetterLectio] Content script loaded");
 
     // Listen for messages from background script (e.g., extension icon click)
     browser.runtime.onMessage.addListener((message) => {
-      if (message.action === 'openSettings') {
-        window.dispatchEvent(new CustomEvent('betterlectio:openSettings'));
+      if (message.action === "openSettings") {
+        window.dispatchEvent(new CustomEvent("betterlectio:openSettings"));
       }
     });
 
     // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initLayout);
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initLayout);
     } else {
       initLayout();
     }
@@ -38,29 +42,32 @@ export default defineContentScript({
 
 function replaceFavicon() {
   // Remove existing favicons
-  document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(el => el.remove());
+  document
+    .querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')
+    .forEach((el) => el.remove());
 
   // Add our favicon
-  const favicon = document.createElement('link');
-  favicon.rel = 'icon';
-  favicon.type = 'image/x-icon';
-  favicon.href = browser.runtime.getURL('/assets/favicon.ico');
+  const favicon = document.createElement("link");
+  favicon.rel = "icon";
+  favicon.type = "image/x-icon";
+  favicon.href = browser.runtime.getURL("/assets/favicon.ico");
   document.head.appendChild(favicon);
 }
 
 function injectFont() {
-  const preconnect1 = document.createElement('link');
-  preconnect1.rel = 'preconnect';
-  preconnect1.href = 'https://fonts.googleapis.com';
+  const preconnect1 = document.createElement("link");
+  preconnect1.rel = "preconnect";
+  preconnect1.href = "https://fonts.googleapis.com";
 
-  const preconnect2 = document.createElement('link');
-  preconnect2.rel = 'preconnect';
-  preconnect2.href = 'https://fonts.gstatic.com';
-  preconnect2.crossOrigin = 'anonymous';
+  const preconnect2 = document.createElement("link");
+  preconnect2.rel = "preconnect";
+  preconnect2.href = "https://fonts.gstatic.com";
+  preconnect2.crossOrigin = "anonymous";
 
-  const font = document.createElement('link');
-  font.rel = 'stylesheet';
-  font.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap';
+  const font = document.createElement("link");
+  font.rel = "stylesheet";
+  font.href =
+    "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap";
 
   document.head.append(preconnect1, preconnect2, font);
 }
@@ -80,34 +87,41 @@ function DashboardLayout() {
 function initLayout() {
   // If this page was prerendered and is now activating, it's already set up
   // @ts-ignore
-  const wasPrerendered = (window as any).__IL_PRERENDERED__ && !document.prerendering;
+  const wasPrerendered =
+    (window as any).__IL_PRERENDERED__ && !document.prerendering;
 
   // Check if this is the login.aspx page (session expired redirect, e.g. /lectio/94/login.aspx)
-  const isLoginAspx = /\/lectio\/\d+\/login\.aspx/.test(window.location.pathname);
+  const isLoginAspx = /\/lectio\/\d+\/login\.aspx/.test(
+    window.location.pathname,
+  );
   if (isLoginAspx) {
-    console.log('[BetterLectio] On login.aspx - session expired, clearing login state');
+    console.log(
+      "[BetterLectio] On login.aspx - session expired, clearing login state",
+    );
     updateLoginState(); // This will detect not logged in and clear the cache
-    document.documentElement.classList.add('il-ready');
+    document.documentElement.classList.add("il-ready");
     return;
   }
 
   // Don't inject on login page, print pages, or other non-app pages
-  const isPrintPage = window.location.pathname.includes('print.aspx');
-  const hasMainHeader = !!document.querySelector('.ls-master-header');
+  const isPrintPage = window.location.pathname.includes("print.aspx");
+  const hasMainHeader = !!document.querySelector(".ls-master-header");
 
   if (!hasMainHeader || isPrintPage) {
-    console.log('[BetterLectio] Not on main app page or print page, skipping');
+    console.log("[BetterLectio] Not on main app page or print page, skipping");
 
     // If we're on a school page (has /lectio/XX/) but no main header,
     // user is likely logged out - update the state
     const isSchoolPage = /\/lectio\/\d+\//.test(window.location.pathname);
     if (isSchoolPage && !hasMainHeader && !isPrintPage) {
-      console.log('[BetterLectio] On school page but not logged in, clearing login state');
+      console.log(
+        "[BetterLectio] On school page but not logged in, clearing login state",
+      );
       updateLoginState(); // This will detect not logged in and clear the cache
     }
 
     // Still reveal the page
-    document.documentElement.classList.add('il-ready');
+    document.documentElement.classList.add("il-ready");
     return;
   }
 
@@ -115,10 +129,12 @@ function initLayout() {
   const settings = getSettings();
 
   // Redirect messages page to "Nyeste" folder by default
-  if ((settings.behavior.messagesAutoRedirect ?? true) &&
-      window.location.pathname.includes('beskeder2.aspx') &&
-      !window.location.search.includes('mappeid')) {
-    window.location.href = window.location.pathname + '?mappeid=-70';
+  if (
+    (settings.behavior.messagesAutoRedirect ?? true) &&
+    window.location.pathname.includes("beskeder2.aspx") &&
+    !window.location.search.includes("mappeid")
+  ) {
+    window.location.href = window.location.pathname + "?mappeid=-70";
     return;
   }
 
@@ -140,10 +156,12 @@ function initLayout() {
   // Extract profile picture URL before modifying DOM (for immediate use)
   // Only do this when viewing our own page, not someone else's schedule
   if (isViewingOwnPage()) {
-    const profileImg = document.querySelector('#s_m_HeaderContent_picctrlthumbimage') as HTMLImageElement;
+    const profileImg = document.querySelector(
+      "#s_m_HeaderContent_picctrlthumbimage",
+    ) as HTMLImageElement;
     if (profileImg?.src) {
       const url = new URL(profileImg.src, window.location.origin);
-      url.searchParams.set('fullsize', '1');
+      url.searchParams.set("fullsize", "1");
       (window as any).__IL_PROFILE_PIC__ = url.toString();
     }
   }
@@ -164,11 +182,11 @@ function initLayout() {
   }
 
   // Add our wrapper class
-  document.body.classList.add('il-dashboard-active');
+  document.body.classList.add("il-dashboard-active");
 
   // Create our root container
-  const root = document.createElement('div');
-  root.id = 'il-root';
+  const root = document.createElement("div");
+  root.id = "il-root";
   document.body.appendChild(root);
 
   // Render the dashboard layout
@@ -176,11 +194,11 @@ function initLayout() {
 
   // Wait for the render and then move the original content into our content area
   requestAnimationFrame(() => {
-    const contentContainer = document.getElementById('il-lectio-content');
+    const contentContainer = document.getElementById("il-lectio-content");
     if (contentContainer) {
       // Create a wrapper for the original content
-      const wrapper = document.createElement('div');
-      wrapper.id = 'il-original-content';
+      const wrapper = document.createElement("div");
+      wrapper.id = "il-original-content";
 
       // Move actual DOM nodes (preserves event handlers and form connections)
       for (const node of originalNodes) {
@@ -190,7 +208,7 @@ function initLayout() {
       contentContainer.appendChild(wrapper);
 
       // Reveal the page now that our UI is ready
-      document.documentElement.classList.add('il-ready');
+      document.documentElement.classList.add("il-ready");
 
       // Initialize preloading for faster navigation
       const schoolId = window.location.pathname.match(/\/lectio\/(\d+)\//)?.[1];
@@ -200,32 +218,55 @@ function initLayout() {
         }
 
         // Inject FindSkema page
-        if ((settings.pages.findSkemaRedesign ?? true) &&
-            window.location.pathname.toLowerCase().includes('findskema.aspx')) {
+        if (
+          (settings.pages.findSkemaRedesign ?? true) &&
+          window.location.pathname.toLowerCase().includes("findskema.aspx")
+        ) {
           injectFindSkemaPage(schoolId);
         }
 
         // Inject greeting on forside page
-        if ((settings.pages.forsideRedesign ?? true) &&
-            window.location.pathname.toLowerCase().includes('forside.aspx')) {
+        if (
+          (settings.pages.forsideRedesign ?? true) &&
+          window.location.pathname.toLowerCase().includes("forside.aspx")
+        ) {
           injectForsideGreeting();
         }
 
         // Inject members page UI
-        if ((settings.pages.membersPageCards ?? true) &&
-            window.location.pathname.toLowerCase().includes('members.aspx')) {
+        if (
+          (settings.pages.membersPageCards ?? true) &&
+          window.location.pathname.toLowerCase().includes("members.aspx")
+        ) {
           injectMembersPage(schoolId);
         }
 
+        // Inject fravær summary and subnavigation (Oversigt/Fraværsårsager)
+        if (
+          /\/subnav\/fravaerelev(_fravaersaarsager)?\.aspx/i.test(
+            window.location.pathname,
+          )
+        ) {
+          injectFravaerSummaryBar();
+          injectFravaerSubnav();
+        }
+
         // Inject "viewing schedule" header when looking at someone else's schedule
-        if ((settings.schedule.viewingScheduleHeader ?? true) && !isViewingOwnPage()) {
+        if (
+          (settings.schedule.viewingScheduleHeader ?? true) &&
+          !isViewingOwnPage()
+        ) {
           injectViewingScheduleHeader(schoolId);
 
           // Add body class for entity schedules (non-person types like hold, class, room)
           // This enables showing the Lectio subnavigation for these pages
           const viewedEntity = getViewedEntityId();
-          if (viewedEntity && viewedEntity.type !== 'student' && viewedEntity.type !== 'teacher') {
-            document.body.classList.add('il-entity-schedule');
+          if (
+            viewedEntity &&
+            viewedEntity.type !== "student" &&
+            viewedEntity.type !== "teacher"
+          ) {
+            document.body.classList.add("il-entity-schedule");
           }
         }
       }
@@ -247,50 +288,56 @@ function initLayout() {
       // Remove redundant tooltip on activity page title
       removeActivityTitleTooltip();
 
-      console.log('[BetterLectio] Dashboard layout injected');
+      console.log("[BetterLectio] Dashboard layout injected");
     }
   });
 }
 
 function removeActivityTitleTooltip() {
   // On activity pages, the title has a tooltip that duplicates all info already shown on page
-  const activityHeader = document.getElementById('s_m_Content_Content_tocAndToolbar_actHeader');
+  const activityHeader = document.getElementById(
+    "s_m_Content_Content_tocAndToolbar_actHeader",
+  );
   if (!activityHeader) return;
 
-  const tooltipElement = activityHeader.querySelector('[data-tooltip]');
+  const tooltipElement = activityHeader.querySelector("[data-tooltip]");
   if (tooltipElement) {
-    tooltipElement.removeAttribute('data-tooltip');
+    tooltipElement.removeAttribute("data-tooltip");
   }
 
   // Remove native browser tooltip from activity note textarea
-  const activityNote = document.getElementById('s_m_Content_Content_tocAndToolbar_ActNoteTB_tb');
+  const activityNote = document.getElementById(
+    "s_m_Content_Content_tocAndToolbar_ActNoteTB_tb",
+  );
   if (activityNote) {
-    activityNote.removeAttribute('title');
+    activityNote.removeAttribute("title");
   }
 }
 
 function highlightTodayInSchedule() {
   const today = new Date();
-  const isoDate = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
+  const isoDate = today.toISOString().split("T")[0]; // "YYYY-MM-DD"
 
   // Find all cells with today's date and mark them
-  const todayCells = document.querySelectorAll(`.s2skema td[data-date="${isoDate}"]`);
+  const todayCells = document.querySelectorAll(
+    `.s2skema td[data-date="${isoDate}"]`,
+  );
   if (todayCells.length === 0) return;
 
-  todayCells.forEach(td => {
-    td.classList.add('is-today');
+  todayCells.forEach((td) => {
+    td.classList.add("is-today");
 
     // Find the column index to highlight the header too
     const cellIndex = (td as HTMLTableCellElement).cellIndex;
-    const table = td.closest('table');
+    const table = td.closest("table");
     if (!table) return;
 
     // Find and mark the day header cell in the same column
-    const headerRow = table.querySelector('tr.s2dayHeader');
+    const headerRow = table.querySelector("tr.s2dayHeader");
     if (headerRow) {
       const headerCell = headerRow.children[cellIndex] as HTMLTableCellElement;
       if (headerCell) {
-        headerCell.classList.add('is-today');
+        headerCell.classList.add("is-today");
         // Change text to "I dag" with the date
         const dateMatch = headerCell.textContent?.match(/\((\d+\/\d+)\)/);
         if (dateMatch) {
@@ -300,11 +347,13 @@ function highlightTodayInSchedule() {
     }
 
     // Also mark the info header cell (row with announcements)
-    const infoHeaderRow = table.querySelector('tr:has(.s2infoHeader)');
+    const infoHeaderRow = table.querySelector("tr:has(.s2infoHeader)");
     if (infoHeaderRow) {
-      const infoCell = infoHeaderRow.children[cellIndex] as HTMLTableCellElement;
+      const infoCell = infoHeaderRow.children[
+        cellIndex
+      ] as HTMLTableCellElement;
       if (infoCell) {
-        infoCell.classList.add('is-today');
+        infoCell.classList.add("is-today");
       }
     }
   });
@@ -312,16 +361,18 @@ function highlightTodayInSchedule() {
 
 function injectCurrentTimeIndicator() {
   const today = new Date();
-  const isoDate = today.toISOString().split('T')[0];
-  const todayCell = document.querySelector(`.s2skema td[data-date="${isoDate}"]`);
+  const isoDate = today.toISOString().split("T")[0];
+  const todayCell = document.querySelector(
+    `.s2skema td[data-date="${isoDate}"]`,
+  );
   if (!todayCell) return;
 
-  const container = todayCell.querySelector('.s2skemabrikcontainer');
+  const container = todayCell.querySelector(".s2skemabrikcontainer");
   if (!container) return;
 
   // Create the time indicator line
-  const indicator = document.createElement('div');
-  indicator.id = 'il-time-indicator';
+  const indicator = document.createElement("div");
+  indicator.id = "il-time-indicator";
   // indicator.innerHTML = '<span class="il-time-label"></span><div class="il-time-dot"></div>';
   indicator.innerHTML = '<div class="il-time-dot"></div>';
   container.appendChild(indicator);
@@ -332,7 +383,7 @@ function injectCurrentTimeIndicator() {
 }
 
 function updateTimeIndicatorPosition() {
-  const indicator = document.getElementById('il-time-indicator');
+  const indicator = document.getElementById("il-time-indicator");
   if (!indicator) return;
 
   const now = new Date();
@@ -344,7 +395,7 @@ function updateTimeIndicatorPosition() {
 
   // Hide if outside schedule hours
   if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
-    indicator.style.display = 'none';
+    indicator.style.display = "none";
     return;
   }
 
@@ -353,7 +404,7 @@ function updateTimeIndicatorPosition() {
   // Rate: (45.818 - 0.636) / (1200 - 490) = 0.0636 em/min
   const topEm = 0.636 + (currentMinutes - startMinutes) * 0.0636;
 
-  indicator.style.display = '';
+  indicator.style.display = "";
   indicator.style.top = `${topEm}em`;
 
   // Update time label (commented out - overlaps with schedule)
@@ -366,28 +417,28 @@ function updateTimeIndicatorPosition() {
 }
 
 function injectScheduleColgroup() {
-  const tables = document.querySelectorAll('.s2skema');
-  tables.forEach(table => {
+  const tables = document.querySelectorAll(".s2skema");
+  tables.forEach((table) => {
     // Skip if colgroup already exists
-    if (table.querySelector('colgroup')) return;
+    if (table.querySelector("colgroup")) return;
 
     // Count day columns (cells with data-date attribute in content row)
-    const contentRow = table.querySelector('tr:has(td[data-date])');
+    const contentRow = table.querySelector("tr:has(td[data-date])");
     if (!contentRow) return;
 
-    const dayColumns = contentRow.querySelectorAll('td[data-date]').length;
+    const dayColumns = contentRow.querySelectorAll("td[data-date]").length;
 
     // Create colgroup with proper widths
-    const colgroup = document.createElement('colgroup');
+    const colgroup = document.createElement("colgroup");
 
     // First column (module times) - fixed narrow width
-    const firstCol = document.createElement('col');
-    firstCol.style.width = '7.5em';
+    const firstCol = document.createElement("col");
+    firstCol.style.width = "7.5em";
     colgroup.appendChild(firstCol);
 
     // Day columns - equal distribution of remaining space
     for (let i = 0; i < dayColumns; i++) {
-      const col = document.createElement('col');
+      const col = document.createElement("col");
       colgroup.appendChild(col);
     }
 
@@ -398,40 +449,57 @@ function injectScheduleColgroup() {
 
 function injectFindSkemaPage(schoolId: string) {
   // Add body class for FindSkema-specific CSS
-  document.body.classList.add('il-findskema');
+  document.body.classList.add("il-findskema");
 
   // Find the content container
-  const contentContainer = document.getElementById('il-lectio-content');
+  const contentContainer = document.getElementById("il-lectio-content");
   if (!contentContainer) return;
 
   // Get search type from URL (e.g., ?type=lokale)
   const urlParams = new URLSearchParams(window.location.search);
-  const searchType = urlParams.get('type') as 'elev' | 'laerer' | 'stamklasse' | 'lokale' | 'ressource' | 'hold' | 'gruppe' | undefined;
+  const searchType = urlParams.get("type") as
+    | "elev"
+    | "laerer"
+    | "stamklasse"
+    | "lokale"
+    | "ressource"
+    | "hold"
+    | "gruppe"
+    | undefined;
 
   // Create container for our FindSkema page
-  const findSkemaContainer = document.createElement('div');
-  findSkemaContainer.id = 'il-findskema-page';
+  const findSkemaContainer = document.createElement("div");
+  findSkemaContainer.id = "il-findskema-page";
 
   // Insert at the beginning of the content container
-  contentContainer.insertBefore(findSkemaContainer, contentContainer.firstChild);
+  contentContainer.insertBefore(
+    findSkemaContainer,
+    contentContainer.firstChild,
+  );
 
   // Render the FindSkema page component
-  render(<FindSkemaPage schoolId={schoolId} searchType={searchType || 'elev'} />, findSkemaContainer);
+  render(
+    <FindSkemaPage schoolId={schoolId} searchType={searchType || "elev"} />,
+    findSkemaContainer,
+  );
 
-  console.log('[BetterLectio] FindSkema page injected with type:', searchType || 'elev');
+  console.log(
+    "[BetterLectio] FindSkema page injected with type:",
+    searchType || "elev",
+  );
 }
 
 function injectForsideGreeting() {
   // Add body class for forside-specific CSS
-  document.body.classList.add('il-forside');
+  document.body.classList.add("il-forside");
 
   // Find the content container
-  const contentContainer = document.getElementById('il-lectio-content');
+  const contentContainer = document.getElementById("il-lectio-content");
   if (!contentContainer) return;
 
   // Create container for the greeting
-  const greetingContainer = document.createElement('div');
-  greetingContainer.id = 'il-forside-greeting';
+  const greetingContainer = document.createElement("div");
+  greetingContainer.id = "il-forside-greeting";
 
   // Insert at the beginning of the content container
   contentContainer.insertBefore(greetingContainer, contentContainer.firstChild);
@@ -442,28 +510,36 @@ function injectForsideGreeting() {
   // Apply masonry layout to dashboard cards
   applyMasonryLayout();
 
-  console.log('[BetterLectio] Forside greeting injected');
+  console.log("[BetterLectio] Forside greeting injected");
 }
 
 function applyMasonryLayout() {
   // Delay to ensure CSS has been applied and container has proper width
   setTimeout(() => {
-    const container = document.querySelector('#il-original-content .ls-std-island-layout-ltr') as HTMLElement;
+    const container = document.querySelector(
+      "#il-original-content .ls-std-island-layout-ltr",
+    ) as HTMLElement;
     if (!container) return;
 
     // Get all cards (they're inside column wrappers with display: contents)
-    const cards = Array.from(container.querySelectorAll('.lf-island')) as HTMLElement[];
+    const cards = Array.from(
+      container.querySelectorAll(".lf-island"),
+    ) as HTMLElement[];
     if (cards.length === 0) return;
 
     const layoutMasonry = () => {
       // Use the scroll container width minus padding (1.5rem * 2 = 48px)
-      const scrollContainer = document.getElementById('il-lectio-content');
-      const containerWidth = scrollContainer ? scrollContainer.clientWidth - 48 : container.clientWidth;
+      const scrollContainer = document.getElementById("il-lectio-content");
+      const containerWidth = scrollContainer
+        ? scrollContainer.clientWidth - 48
+        : container.clientWidth;
       const gap = 16; // 1rem
       const minCardWidth = 280; // Minimum card width before reducing columns
 
       // Calculate number of columns based on container width
-      let numColumns = Math.floor((containerWidth + gap) / (minCardWidth + gap));
+      let numColumns = Math.floor(
+        (containerWidth + gap) / (minCardWidth + gap),
+      );
       numColumns = Math.max(1, Math.min(numColumns, 3)); // Between 1 and 3 columns
 
       // For very narrow screens, force single column if width is less than 600px
@@ -477,17 +553,19 @@ function applyMasonryLayout() {
 
       // Set container width explicitly to match the calculated width
       // Use setProperty with !important to override any CSS rules
-      container.style.setProperty('width', `${containerWidth}px`, 'important');
+      container.style.setProperty("width", `${containerWidth}px`, "important");
 
       // Track the height of each column
       const columnHeights = new Array(numColumns).fill(0);
 
       cards.forEach((card) => {
         // Find the shortest column
-        const shortestColumn = columnHeights.indexOf(Math.min(...columnHeights));
+        const shortestColumn = columnHeights.indexOf(
+          Math.min(...columnHeights),
+        );
 
         // Position the card
-        card.style.position = 'absolute';
+        card.style.position = "absolute";
         card.style.width = `${cardWidth}px`;
         card.style.left = `${shortestColumn * (cardWidth + gap)}px`;
         card.style.top = `${columnHeights[shortestColumn]}px`;
@@ -497,13 +575,22 @@ function applyMasonryLayout() {
       });
 
       // Set container height to tallest column
-      container.style.setProperty('height', `${Math.max(...columnHeights)}px`, 'important');
+      container.style.setProperty(
+        "height",
+        `${Math.max(...columnHeights)}px`,
+        "important",
+      );
 
-      console.log('[BetterLectio] Masonry layout:', { containerWidth, numColumns, cardWidth, scrollContainerWidth: scrollContainer?.clientWidth });
+      console.log("[BetterLectio] Masonry layout:", {
+        containerWidth,
+        numColumns,
+        cardWidth,
+        scrollContainerWidth: scrollContainer?.clientWidth,
+      });
     };
 
     // Make container relative for absolute positioning
-    container.style.position = 'relative';
+    container.style.position = "relative";
 
     // Initial layout after a frame to ensure styles are applied
     requestAnimationFrame(() => {
@@ -511,7 +598,7 @@ function applyMasonryLayout() {
     });
 
     // Relayout on resize - observe the scroll container for width changes
-    const scrollContainer = document.getElementById('il-lectio-content');
+    const scrollContainer = document.getElementById("il-lectio-content");
     if (scrollContainer) {
       const resizeObserver = new ResizeObserver(() => {
         layoutMasonry();
@@ -526,12 +613,12 @@ function injectViewingScheduleHeader(schoolId: string) {
   if (!viewedEntity) return;
 
   // Find the content container
-  const contentContainer = document.getElementById('il-lectio-content');
+  const contentContainer = document.getElementById("il-lectio-content");
   if (!contentContainer) return;
 
   // Create container for the header
-  const headerContainer = document.createElement('div');
-  headerContainer.id = 'il-viewing-schedule-header';
+  const headerContainer = document.createElement("div");
+  headerContainer.id = "il-viewing-schedule-header";
 
   // Insert at the beginning of the content container
   contentContainer.insertBefore(headerContainer, contentContainer.firstChild);
@@ -546,19 +633,22 @@ function injectViewingScheduleHeader(schoolId: string) {
       schoolId={schoolId}
       entityId={viewedEntity.id}
     />,
-    headerContainer
+    headerContainer,
   );
 
-  console.log('[BetterLectio] Viewing schedule header injected for', viewedEntity.type);
+  console.log(
+    "[BetterLectio] Viewing schedule header injected for",
+    viewedEntity.type,
+  );
 }
 
 function injectMembersPage(schoolId: string) {
   const url = new URL(window.location.href);
-  const reportType = url.searchParams.get('reporttype');
+  const reportType = url.searchParams.get("reporttype");
 
   // Redirect to withpics format if not already there (gives us pictures in the table)
-  if (reportType !== 'withpics') {
-    url.searchParams.set('reporttype', 'withpics');
+  if (reportType !== "withpics") {
+    url.searchParams.set("reporttype", "withpics");
     window.location.replace(url.toString());
     return;
   }
@@ -566,29 +656,226 @@ function injectMembersPage(schoolId: string) {
   // Parse members from the existing table
   const members = parseMembersFromDOM();
   if (members.length === 0) {
-    console.log('[BetterLectio] No members found on page');
+    console.log("[BetterLectio] No members found on page");
     return;
   }
 
   // Find the content container
-  const contentContainer = document.getElementById('il-lectio-content');
+  const contentContainer = document.getElementById("il-lectio-content");
   if (!contentContainer) return;
 
   // Create container for our members page
-  const membersContainer = document.createElement('div');
-  membersContainer.id = 'il-members-page';
+  const membersContainer = document.createElement("div");
+  membersContainer.id = "il-members-page";
 
   // Append to content container (after the viewing header if present)
   contentContainer.appendChild(membersContainer);
 
   // Add class to hide the original Lectio content
-  document.body.classList.add('il-members-page-active');
+  document.body.classList.add("il-members-page-active");
 
   // Render the members page component
   render(
     <MembersPage schoolId={schoolId} members={members} />,
-    membersContainer
+    membersContainer,
   );
 
-  console.log('[BetterLectio] Members page injected with', members.length, 'members');
+  console.log(
+    "[BetterLectio] Members page injected with",
+    members.length,
+    "members",
+  );
 }
+
+function injectFravaerSubnav() {
+  if (document.getElementById("il-fravaer-subnav")) return;
+
+  const contentContainer = document.getElementById("il-lectio-content");
+  if (!contentContainer) return;
+
+  const sourceNav = document.querySelector(
+    "#il-original-content .ls-subnav2",
+  ) as HTMLElement | null;
+  if (!sourceNav) return;
+
+  const links = Array.from(sourceNav.querySelectorAll("a")).filter(
+    (link) => !!link.getAttribute("href") && link.textContent?.trim(),
+  );
+  if (links.length === 0) return;
+
+  const nav = document.createElement("nav");
+  nav.id = "il-fravaer-subnav";
+  nav.className = "il-fravaer-subnav";
+  nav.setAttribute("aria-label", "Fravær");
+
+  links.forEach((link) => {
+    const href = link.getAttribute("href");
+    if (!href) return;
+
+    const linkUrl = new URL(href, window.location.origin);
+    const navLink = document.createElement("a");
+    navLink.href = linkUrl.toString();
+    navLink.textContent = link.textContent?.trim() ?? "";
+    navLink.className = "il-fravaer-subnav-link";
+
+    if (linkUrl.pathname === window.location.pathname) {
+      navLink.classList.add("is-active");
+    }
+
+    nav.appendChild(navLink);
+  });
+
+  if (!nav.childElementCount) return;
+
+  document.body.classList.add("il-fravaer-page");
+
+  const summaryBar = document.getElementById("il-fravaer-summary");
+  const insertBeforeNode = summaryBar?.nextSibling ?? contentContainer.firstChild;
+  contentContainer.insertBefore(nav, insertBeforeNode);
+}
+
+function injectFravaerSummaryBar() {
+  if (document.getElementById("il-fravaer-summary")) return;
+
+  const contentContainer = document.getElementById("il-lectio-content");
+  if (!contentContainer) return;
+
+  const summary = document.createElement("section");
+  summary.id = "il-fravaer-summary";
+  summary.className = "il-fravaer-summary";
+  summary.setAttribute("role", "region");
+  summary.setAttribute("aria-label", "Fravær overblik");
+
+  const inner = document.createElement("div");
+  inner.className = "il-fravaer-summary-inner";
+
+  const header = document.createElement("div");
+  header.className = "il-fravaer-summary-header";
+
+  const title = document.createElement("div");
+  title.className = "il-fravaer-summary-title";
+  title.textContent =
+    document
+      .getElementById("s_m_HeaderContent_MainTitle")
+      ?.textContent?.trim() || "Fravær";
+
+  header.append(title);
+
+  const metrics = buildFravaerSummaryMetrics();
+  if (metrics.length > 0) {
+    const metricsContainer = document.createElement("div");
+    metricsContainer.className = "il-fravaer-summary-metrics";
+
+    metrics.forEach((metric) => {
+      const item = document.createElement("div");
+      item.className = "il-fravaer-summary-metric";
+
+      const label = document.createElement("span");
+      label.className = "il-fravaer-summary-label";
+      label.textContent = metric.label;
+
+      const value = document.createElement("span");
+      value.className = "il-fravaer-summary-value";
+      value.textContent = metric.value;
+
+      if (metric.subvalue) {
+        const subvalue = document.createElement("span");
+        subvalue.className = "il-fravaer-summary-subvalue";
+        subvalue.textContent = metric.subvalue;
+        item.append(label, value, subvalue);
+      } else {
+        item.append(label, value);
+      }
+
+      metricsContainer.appendChild(item);
+    });
+
+    inner.append(header, metricsContainer);
+  } else {
+    inner.appendChild(header);
+  }
+
+  summary.appendChild(inner);
+
+  document.body.classList.add("il-fravaer-page");
+  contentContainer.insertBefore(summary, contentContainer.firstChild);
+}
+
+function buildFravaerSummaryMetrics() {
+  const metrics: Array<{ label: string; value: string; subvalue?: string }> =
+    [];
+  const table = document.getElementById(
+    "s_m_Content_Content_SFTabStudentAbsenceDataTable",
+  ) as HTMLTableElement | null;
+  if (table) {
+    const rows = Array.from(table.querySelectorAll("tr"));
+    const totalRow = rows.find((row) =>
+      row.textContent?.includes("Samlet"),
+    ) as HTMLTableRowElement | undefined;
+    if (!totalRow) return metrics;
+
+    const cells = Array.from(totalRow.querySelectorAll("td"));
+    if (cells.length < 9) return metrics;
+
+    const almindeligtOpgjort = formatMetric(cells[1], cells[2]);
+    const almindeligtAar = formatMetric(cells[3], cells[4]);
+    const skriftligtOpgjort = formatMetric(cells[5], cells[6]);
+    const skriftligtAar = formatMetric(cells[7], cells[8]);
+
+    if (almindeligtOpgjort || almindeligtAar) {
+      metrics.push({
+        label: "Almindeligt",
+        value: almindeligtOpgjort || almindeligtAar,
+        subvalue:
+          almindeligtOpgjort && almindeligtAar
+            ? `Året ${almindeligtAar}`
+            : undefined,
+      });
+    }
+
+    if (skriftligtOpgjort || skriftligtAar) {
+      metrics.push({
+        label: "Skriftligt",
+        value: skriftligtOpgjort || skriftligtAar,
+        subvalue:
+          skriftligtOpgjort && skriftligtAar
+            ? `Året ${skriftligtAar}`
+            : undefined,
+      });
+    }
+
+    return metrics;
+  }
+
+  const almindeligtSamlet = document.getElementById(
+    "s_m_Content_Content_FremmoedeFravaer",
+  ) as HTMLElement | null;
+  const skriftligtSamlet = document.getElementById(
+    "s_m_Content_Content_SkriftligFravaer",
+  ) as HTMLElement | null;
+
+  if (almindeligtSamlet?.textContent?.trim()) {
+    metrics.push({
+      label: "Almindeligt",
+      value: almindeligtSamlet.textContent.trim(),
+    });
+  }
+
+  if (skriftligtSamlet?.textContent?.trim()) {
+    metrics.push({
+      label: "Skriftligt",
+      value: skriftligtSamlet.textContent.trim(),
+    });
+  }
+
+  return metrics;
+}
+
+function formatMetric(primaryCell?: Element, secondaryCell?: Element) {
+  const primary = primaryCell?.textContent?.trim();
+  const secondary = secondaryCell?.textContent?.trim();
+  if (!primary && !secondary) return "";
+  if (primary && secondary) return `${primary} (${secondary})`;
+  return primary || secondary || "";
+}
+
