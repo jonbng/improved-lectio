@@ -199,6 +199,27 @@ export function createSearchText(
   return parts.join(' ');
 }
 
+function getFuzzyWindowRatio(pattern: string, str: string): number {
+  let patternIndex = 0;
+  let firstMatch = -1;
+  let lastMatch = -1;
+
+  for (let i = 0; i < str.length && patternIndex < pattern.length; i++) {
+    if (pattern[patternIndex] === str[i]) {
+      if (firstMatch === -1) firstMatch = i;
+      lastMatch = i;
+      patternIndex += 1;
+    }
+  }
+
+  if (patternIndex < pattern.length || firstMatch === -1 || lastMatch === -1) {
+    return 0;
+  }
+
+  const matchWindow = lastMatch - firstMatch + 1;
+  return pattern.length / matchWindow;
+}
+
 export interface SearchResult {
   item: SearchableItem;
   score: number;
@@ -261,8 +282,14 @@ export function searchItems(
     }
 
     // Strategy 3: Fuzzy match
+    const windowRatio = getFuzzyWindowRatio(normalizedQuery, normalizedSearchText);
+    const minWindowRatio =
+      normalizedQuery.length <= 3 ? 0.8 : normalizedQuery.length <= 5 ? 0.6 : 0.5;
+    const minFuzzyScore =
+      normalizedQuery.length <= 3 ? 95 : normalizedQuery.length <= 5 ? 80 : 70;
+
     const [matched, fuzzyScore] = fuzzyMatch(query, item.searchText);
-    if (matched && fuzzyScore > 50) {
+    if (matched && windowRatio >= minWindowRatio && fuzzyScore >= minFuzzyScore) {
       results.push({ item, score: fuzzyScore, matchType: 'fuzzy' });
     }
   }
