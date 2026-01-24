@@ -199,7 +199,7 @@ Key responsibilities:
 - Moves (not clones) original DOM to preserve event handlers
 - Initializes the preloading system
 - Injects page-specific components (FindSkema, Forside greeting, Members page)
-- Handles schedule enhancements (today highlight, time indicator)
+- Handles schedule enhancements (today highlight, time indicator, optional time label)
 - Updates page titles to cleaner format
 - Listens for settings modal open events from background script
 
@@ -267,7 +267,7 @@ Features:
 **Purpose:** Extension settings and about information
 
 Sections:
-- **Udseende (Appearance)** - Theme settings (planned)
+- **Udseende (Appearance)** - Experimental dark mode toggle
 - **Notifikationer** - Notification preferences (planned)
 - **Avanceret** - Advanced settings, clear cache option
 - **Om (About)** - Version info, install date, links to GitHub/bug reports
@@ -464,12 +464,13 @@ HTML snapshots of Lectio pages before extension modification:
 ### Navigation & UI
 - Modern sidebar with collapsible sections
 - Settings modal (appearance, notifications, about)
+- Experimental dark mode toggle
 - Clean page titles with unread badge
 - Custom favicon
 
 ### Schedule Features
 - Today column highlight with "I dag" label
-- Current time indicator line
+- Current time indicator line (optional time label)
 - Viewing header with star toggle and back navigation
 - Support for all entity types (student, teacher, class, room, hold, group, resource)
 

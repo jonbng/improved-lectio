@@ -54,9 +54,10 @@ Note: `window.location.href = "/relative/path"` and `<a href="/path">` work fine
 - **Session Popup Block** - Blocks "Din session udløber snart" popup
 - **Custom Sidebar** - Modern navigation with collapsible sections, settings modal access
 - **FindSkema Redesign** - Fuzzy search, type filters, starred people, recent searches, person cards
-- **Schedule Enhancements** - Today highlight, current time indicator, back navigation
+- **Schedule Enhancements** - Today highlight, current time indicator, optional time label, back navigation
 - **Viewing Header** - Shows whose schedule with star toggle, type badge, back link
 - **Settings Modal** - Appearance, notifications, advanced settings, version info
+- **Experimental Dark Mode** - Manual toggle for dark color palette
 - **Clean Page Titles** - Modern titles with unread message badge count
 - **Forside Redesign** - Time-based greeting, live clock, masonry card layout
 

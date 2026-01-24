@@ -84,6 +84,10 @@ function DashboardLayout() {
   );
 }
 
+function applyDarkMode(enabled: boolean) {
+  document.documentElement.classList.toggle("dark", enabled);
+}
+
 function initLayout() {
   // If this page was prerendered and is now activating, it's already set up
   // @ts-ignore
@@ -127,6 +131,8 @@ function initLayout() {
 
   // Get settings for feature checks
   const settings = getSettings();
+
+  applyDarkMode(settings.visual.darkMode ?? false);
 
   // Redirect messages page to "Nyeste" folder by default
   if (
@@ -281,7 +287,7 @@ function initLayout() {
       if (settings.schedule.todayHighlight ?? true) {
         highlightTodayInSchedule();
         if (settings.schedule.currentTimeIndicator ?? true) {
-          injectCurrentTimeIndicator();
+          injectCurrentTimeIndicator(settings.schedule.currentTimeLabel ?? false);
         }
       }
 
@@ -359,7 +365,7 @@ function highlightTodayInSchedule() {
   });
 }
 
-function injectCurrentTimeIndicator() {
+function injectCurrentTimeIndicator(showTimeLabel: boolean) {
   const today = new Date();
   const isoDate = today.toISOString().split("T")[0];
   const todayCell = document.querySelector(
@@ -373,8 +379,9 @@ function injectCurrentTimeIndicator() {
   // Create the time indicator line
   const indicator = document.createElement("div");
   indicator.id = "il-time-indicator";
-  // indicator.innerHTML = '<span class="il-time-label"></span><div class="il-time-dot"></div>';
-  indicator.innerHTML = '<div class="il-time-dot"></div>';
+  indicator.innerHTML = showTimeLabel
+    ? '<span class="il-time-label"></span><div class="il-time-dot"></div>'
+    : '<div class="il-time-dot"></div>';
   container.appendChild(indicator);
 
   // Update position immediately and every minute
@@ -407,13 +414,13 @@ function updateTimeIndicatorPosition() {
   indicator.style.display = "";
   indicator.style.top = `${topEm}em`;
 
-  // Update time label (commented out - overlaps with schedule)
-  // const timeLabel = indicator.querySelector('.il-time-label');
-  // if (timeLabel) {
-  //   const hours = now.getHours().toString().padStart(2, '0');
-  //   const minutes = now.getMinutes().toString().padStart(2, '0');
-  //   timeLabel.textContent = `${hours}:${minutes}`;
-  // }
+  // Update time label (when enabled)
+  const timeLabel = indicator.querySelector(".il-time-label");
+  if (timeLabel) {
+    const hours = now.getHours().toString().padStart(2, "0");
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    timeLabel.textContent = `${hours}:${minutes}`;
+  }
 }
 
 function injectScheduleColgroup() {

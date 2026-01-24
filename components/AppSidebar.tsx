@@ -282,8 +282,14 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <img src={logoUrl} alt="BetterLectio" width={32} height={32} className="size-8 shrink-0" />
-          <span className="text-[1.35rem] font-semibold truncate text-gray-800 group-data-[collapsible=icon]:hidden">
+          <img
+            src={logoUrl}
+            alt="BetterLectio"
+            width={32}
+            height={32}
+            className="size-8 shrink-0 dark:invert dark:brightness-110"
+          />
+          <span className="text-[1.35rem] font-semibold truncate text-sidebar-foreground group-data-[collapsible=icon]:hidden">
             {schoolName === 'Sorø Akademis Skole' ? 'Sorø Akademi' : schoolName}
           </span>
         </div>

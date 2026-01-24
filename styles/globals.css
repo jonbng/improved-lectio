@@ -76,6 +76,25 @@
 }
 
 .dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
   --sidebar: hsl(240 5.9% 10%);
   --sidebar-foreground: hsl(240 4.8% 95.9%);
   --sidebar-primary: hsl(224.3 76.3% 48%);
@@ -84,6 +103,16 @@
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --lectio-dark-bg: #212529;
+  --lectio-dark-surface: #343a40;
+  --lectio-dark-element: #495057;
+  --lectio-dark-border: #6c757d;
+  --lectio-dark-text: #e9ecef;
+  --lectio-dark-link: #a2b4f7;
+  --lectio-dark-link-hover: #6f7ffa;
+  --lectio-dark-calendar: #6f7d8b;
+  --lectio-dark-info: #608cba;
+  --lectio-dark-header: #57b756;
 }
 
 @layer base {
@@ -182,7 +211,7 @@
     height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    background: #f8f9fa;
+    background: var(--background);
   }
 
   /* Original content wrapper */
@@ -1173,7 +1202,7 @@
     border-radius: 50%;
   }
 
-  /* Time label - commented out, overlaps with schedule
+  /* Time label - optional */
   #il-time-indicator .il-time-label {
     position: absolute;
     right: calc(100% + 8px);
@@ -1184,7 +1213,6 @@
     color: rgb(239, 68, 68);
     white-space: nowrap;
   }
-  */
 
   /* Hide "hold og grupper" section at bottom of schedule page */
   #il-original-content #s_m_Content_Content_holdElementLinkList,
@@ -1635,5 +1663,191 @@
   /* Members page grid container */
   #il-members-page {
     padding: 1rem 1.5rem 1.5rem 1.5rem !important;
+  }
+
+  /* ========================================
+     Experimental dark mode for native Lectio UI
+     ======================================== */
+  .dark body,
+  .dark #masterContent,
+  .dark .island,
+  .dark .ls-container,
+  .dark .islandContent {
+    background-color: var(--lectio-dark-bg) !important;
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark SECTION.island .islandHeaderContainer {
+    background-image: url("") !important;
+    background-color: var(--lectio-dark-element) !important;
+  }
+
+  .dark .ls-island-elevated div[role="heading"] > span:first-of-type {
+    color: var(--lectio-dark-link) !important;
+  }
+
+  .dark SECTION.island .islandHeader {
+    color: var(--lectio-dark-header) !important;
+  }
+
+  .dark .message-thread-message,
+  .dark .ls-paper,
+  .dark .ls-texteditor-container,
+  .dark .ls-tocContainer-outer,
+  .dark .lc-display-fragment,
+  .dark .ls-phase-activity,
+  .dark #s_m_Content_Content_SkemaMedNavigation_skemaprintare {
+    background-color: var(--lectio-dark-surface) !important;
+    border-color: var(--lectio-dark-element) !important;
+  }
+
+  .dark .lectioTabContent {
+    background-color: var(--lectio-dark-border) !important;
+  }
+
+  .dark .ls-island-elevated,
+  .dark .lec-context-menu,
+  .dark .ls-questionnaire-question,
+  .dark .ls-island-outlined {
+    background-color: var(--lectio-dark-element) !important;
+    border-color: var(--lectio-dark-border) !important;
+    outline: var(--lectio-dark-border) !important;
+  }
+
+  .dark .s2module-bg,
+  .dark .message-thread-container,
+  .dark .s2skemabrikcontainer,
+  .dark .s2infoHeader {
+    background-color: var(--lectio-dark-element) !important;
+    color: var(--lectio-dark-text) !important;
+    border: 1px solid var(--lectio-dark-border) !important;
+  }
+
+  .dark .s2skemabrik {
+    background-color: var(--lectio-dark-calendar) !important;
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark .s2module-info {
+    color: var(--lectio-dark-info) !important;
+  }
+
+  .dark .s2skemabrik * {
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark .ls-island-outlined div.islandHeaderContainer[role="heading"] span.islandHeader,
+  .dark .ls-island-filled div.islandHeaderContainer[role="heading"] span.islandHeader,
+  .dark .ls-island-elevated div.islandHeaderContainer[role="heading"] span.islandHeader,
+  .dark .ls-island-nostyle div.islandHeaderContainer[role="heading"] span.islandHeader {
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark .month,
+  .dark .week {
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark .ls-island-filled,
+  .dark .ls-island-filled div.islandHeaderContainer[role="heading"] span.islandHeader {
+    background-color: var(--lectio-dark-element) !important;
+    color: var(--lectio-dark-header) !important;
+  }
+
+  .dark .fixedTableHeaderRow > TD,
+  .dark .fixedTableHeaderRow > TH,
+  .dark .fixedTableHeaderRow > GD {
+    background-image: url("") !important;
+  }
+
+  .dark .phase {
+    background-color: var(--lectio-dark-element) !important;
+  }
+
+  .dark option {
+    background-color: var(--lectio-dark-element) !important;
+  }
+
+  .dark table,
+  .dark tr,
+  .dark td,
+  .dark th {
+    background-color: var(--lectio-dark-surface) !important;
+    color: var(--lectio-dark-text) !important;
+    border-color: var(--lectio-dark-element) !important;
+  }
+
+  .dark a {
+    color: var(--lectio-dark-link) !important;
+  }
+
+  .dark a:hover {
+    color: var(--lectio-dark-link-hover) !important;
+  }
+
+  .dark input,
+  .dark select,
+  .dark textarea,
+  .dark button {
+    background-color: var(--lectio-dark-element) !important;
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark .ls-menu-item,
+  .dark .ls-menu-item:hover {
+    background-color: var(--lectio-dark-surface) !important;
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark .ls-card-filled {
+    background-color: var(--lectio-dark-surface) !important;
+  }
+
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4,
+  .dark h5,
+  .dark h6,
+  .dark .s2skemabrikcontent {
+    color: var(--lectio-dark-text) !important;
+  }
+
+  .dark .ls-info-message,
+  .dark .ls-warning-message,
+  .dark .ls-error-message {
+    background-color: var(--lectio-dark-element) !important;
+    color: var(--lectio-dark-text) !important;
+    border: 1px solid var(--lectio-dark-border) !important;
+  }
+
+  .dark DIV.button A,
+  .dark DIV.button,
+  .dark A.button,
+  .dark a,
+  .dark a:hover,
+  .dark .lectioToolbar,
+  .dark .ls-master-header {
+    background-image: url("") !important;
+    background-color: transparent !important;
+  }
+
+  .dark .lectioToolbar,
+  .dark .ls-master-header {
+    justify-content: center !important;
+  }
+
+  .dark .lectioBorderRight,
+  .dark .lectioBorderLeft {
+    border-left: 0 !important;
+    border-right: 0 !important;
+  }
+
+  .dark .ls-master-container2 .ls-master-header-institution {
+    color: #0ca59f !important;
+  }
+
+  .dark .maintitle {
+    color: #ffffff !important;
   }
 }

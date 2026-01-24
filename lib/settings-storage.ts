@@ -8,11 +8,13 @@ const VisualSettingsSchema = z.object({
   customFavicon: z.boolean().default(true),
   cleanPageTitles: z.boolean().default(true),
   foucPrevention: z.boolean().default(true), // requires reload
+  darkMode: z.boolean().default(false),
 });
 
 const ScheduleSettingsSchema = z.object({
   todayHighlight: z.boolean().default(true),
   currentTimeIndicator: z.boolean().default(true),
+  currentTimeLabel: z.boolean().default(false),
   viewingScheduleHeader: z.boolean().default(true),
 });
 
@@ -83,10 +85,13 @@ export type FeatureSettings = z.infer<typeof FeatureSettingsSchema>;
  * These are checked by content scripts that run at document_start.
  */
 export const SETTINGS_REQUIRING_RELOAD = [
+  'visual.customFavicon',
+  'visual.cleanPageTitles',
   'visual.foucPrevention',
   'behavior.sessionPopupBlocker',
   'behavior.autoRedirectForside',
   'pages.loginPageRedesign',
+  'schedule.currentTimeLabel',
 ] as const;
 
 /**
@@ -96,6 +101,7 @@ export const FEATURE_DEPENDENCIES: Record<string, string> = {
   'data.starredPeople': 'pages.findSkemaRedesign',
   'data.recentSearches': 'pages.findSkemaRedesign',
   'schedule.currentTimeIndicator': 'schedule.todayHighlight',
+  'schedule.currentTimeLabel': 'schedule.todayHighlight',
 };
 
 /**

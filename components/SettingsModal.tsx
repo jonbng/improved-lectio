@@ -226,6 +226,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     setSettings(newSettings as FeatureSettings);
     saveSettings(newSettings as FeatureSettings);
 
+    if (category === "visual" && key === "darkMode") {
+      document.documentElement.classList.toggle("dark", value);
+    }
+
     // Show reload toast if this setting requires it
     if (requiresReload(category, key as string)) {
       toast("Indstillingen træder i kraft efter genindlæsning", {
@@ -282,7 +286,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 height={64}
                 className="size-16 shrink-0"
               />
-              <h1 className="text-3xl! font-bold! text-black!">
+              <h1 className="text-3xl! font-bold! text-foreground">
                 BetterLectio
               </h1>
             </div>
@@ -335,7 +339,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 href="https://chromewebstore.google.com/detail/betterlectio/dkfapbjhgiepdijkpfabekbnepiomahj"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-black! hover:bg-accent cursor-pointer transition-colors no-underline"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-foreground hover:bg-accent cursor-pointer transition-colors no-underline"
               >
                 <Chrome className="size-4" />
                 Chrome Web Store
@@ -345,7 +349,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 href="https://github.com/jonbng/betterlectio"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-black! hover:bg-accent cursor-pointer transition-colors no-underline"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-foreground hover:bg-accent cursor-pointer transition-colors no-underline"
               >
                 <Github className="size-4" />
                 GitHub
@@ -355,7 +359,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 href="https://github.com/jonbng/betterlectio/issues"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-black! hover:bg-accent cursor-pointer transition-colors no-underline"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background text-foreground hover:bg-accent cursor-pointer transition-colors no-underline"
               >
                 <Bug className="size-4" />
                 Rapporter problem
@@ -417,11 +421,19 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           <div className="space-y-6">
             <SettingsSection title="Visuelle funktioner">
               <FeatureToggle
+                id="visual-darkmode"
+                label="Eksperimentel mørk tilstand"
+                description="Aktiver en mørk farvepalette i BetterLectio"
+                enabled={settings.visual?.darkMode ?? false}
+                onChange={(v) => handleSettingChange('visual', 'darkMode', v)}
+              />
+              <FeatureToggle
                 id="visual-favicon"
                 label="BetterLectio favicon"
                 description="Erstat Lectios favicon med BetterLectio logoet"
                 enabled={settings.visual?.customFavicon ?? true}
                 onChange={(v) => handleSettingChange('visual', 'customFavicon', v)}
+                requiresReload
               />
               <FeatureToggle
                 id="visual-titles"
@@ -429,6 +441,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 description="Moderne sidetitler med ulæste beskeder badge"
                 enabled={settings.visual?.cleanPageTitles ?? true}
                 onChange={(v) => handleSettingChange('visual', 'cleanPageTitles', v)}
+                requiresReload
               />
               <FeatureToggle
                 id="visual-fouc"
@@ -447,7 +460,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 description="Gul baggrund på dagens kolonne i skemaet"
                 enabled={settings.schedule?.todayHighlight ?? true}
                 onChange={(v) => handleSettingChange('schedule', 'todayHighlight', v)}
-                hasDependent={settings.schedule?.currentTimeIndicator ?? true}
+                hasDependent={
+                  (settings.schedule?.currentTimeIndicator ?? true) ||
+                  (settings.schedule?.currentTimeLabel ?? false)
+                }
               />
               <FeatureToggle
                 id="schedule-time"
@@ -457,6 +473,20 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 onChange={(v) => handleSettingChange('schedule', 'currentTimeIndicator', v)}
                 disabled={!(settings.schedule?.todayHighlight ?? true)}
                 disabledReason="Kræver 'Fremhæv i dag' er aktiveret"
+                hasDependent={settings.schedule?.currentTimeLabel ?? false}
+              />
+              <FeatureToggle
+                id="schedule-time-label"
+                label="Vis klokkeslæt ved tidslinjen"
+                description="Viser tidspunkt ved siden af den røde tidsindikator"
+                enabled={settings.schedule?.currentTimeLabel ?? false}
+                onChange={(v) => handleSettingChange('schedule', 'currentTimeLabel', v)}
+                disabled={
+                  !(settings.schedule?.currentTimeIndicator ?? true) ||
+                  !(settings.schedule?.todayHighlight ?? true)
+                }
+                disabledReason="Kræver 'Fremhæv i dag' og 'Tidsindikator' er aktiveret"
+                requiresReload
               />
               <FeatureToggle
                 id="schedule-viewing"
@@ -765,7 +795,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       <div
         ref={contentRef}
         tabIndex={-1}
-        className="relative z-10 bg-background w-full max-w-[700px] lg:max-w-[800px] max-h-[85vh] md:max-h-[600px] overflow-hidden rounded-lg border shadow-lg mx-4 animate-in fade-in-0 zoom-in-95 duration-200 outline-none"
+        className="relative z-10 bg-background w-full max-w-[700px] lg:max-w-[800px] h-[85vh] md:h-[600px] max-h-[85vh] md:max-h-[600px] overflow-hidden rounded-lg border shadow-lg mx-4 animate-in fade-in-0 zoom-in-95 duration-200 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -778,9 +808,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           <X className="size-5" />
         </button>
 
-        <SidebarProvider className="items-start min-h-0">
+        <SidebarProvider className="items-start min-h-0 h-full w-full">
           <Sidebar collapsible="none" className="flex border-r py-4">
-            <SidebarContent>
+            <SidebarContent className="overflow-y-auto">
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu>
@@ -802,7 +832,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             </SidebarContent>
           </Sidebar>
 
-          <main className="flex h-[580px] flex-1 flex-col overflow-hidden">
+          <main className="flex flex-1 min-h-0 flex-col overflow-y-auto">
             <header className="flex h-12 shrink-0 items-center gap-2 border-b mt-4">
               <div className="flex items-center gap-2 px-6">
                 <Breadcrumb>
@@ -821,7 +851,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </div>
             </header>
 
-            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+            <div className="flex flex-1 flex-col gap-4 p-6">
               {renderContent()}
             </div>
           </main>
