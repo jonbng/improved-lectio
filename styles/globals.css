@@ -32,6 +32,9 @@
   --sidebar-accent-foreground: hsl(240 5.9% 10%);
   --sidebar-border: hsl(220 13% 91%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --scrollbar-track: oklch(0.97 0 0);
+  --scrollbar-thumb: oklch(0.708 0 0);
+  --scrollbar-thumb-hover: oklch(0.556 0 0);
 }
 
 @theme inline {
@@ -113,6 +116,9 @@
   --lectio-dark-calendar: #6f7d8b;
   --lectio-dark-info: #608cba;
   --lectio-dark-header: #57b756;
+  --scrollbar-track: oklch(0.205 0 0);
+  --scrollbar-thumb: oklch(0.439 0 0);
+  --scrollbar-thumb-hover: oklch(0.556 0 0);
 }
 
 @layer base {
@@ -121,6 +127,29 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  * {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 999px;
+    border: 2px solid var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
   }
 }
 
@@ -156,6 +185,12 @@
     width: 100% !important;
   }
 
+  /* Settings modal needs wrapper constrained to modal height */
+  .settings-modal[data-slot="sidebar-wrapper"] {
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
   /* Sidebar wrapper - must be visible (override hidden class) */
   [data-slot="sidebar"].hidden {
     display: block !important;
@@ -164,6 +199,23 @@
   [data-slot="sidebar"] {
     display: block !important;
     height: 100vh !important;
+  }
+
+  .settings-modal [data-slot="sidebar"] {
+    height: 100% !important;
+  }
+
+  /* Force modal main layout to flex to enable inner scrolling */
+  .settings-modal .settings-modal-main {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+
+  .settings-modal .settings-modal-scroll {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
   }
 
   /* Sidebar inner container - fixed left panel */

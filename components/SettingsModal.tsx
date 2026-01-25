@@ -421,13 +421,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           <div className="space-y-6">
             <SettingsSection title="Visuelle funktioner">
               <FeatureToggle
-                id="visual-darkmode"
-                label="Eksperimentel mørk tilstand"
-                description="Aktiver en mørk farvepalette i BetterLectio"
-                enabled={settings.visual?.darkMode ?? false}
-                onChange={(v) => handleSettingChange('visual', 'darkMode', v)}
-              />
-              <FeatureToggle
                 id="visual-favicon"
                 label="BetterLectio favicon"
                 description="Erstat Lectios favicon med BetterLectio logoet"
@@ -527,6 +520,16 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 enabled={settings.pages?.loginPageRedesign ?? true}
                 onChange={(v) => handleSettingChange('pages', 'loginPageRedesign', v)}
                 requiresReload
+              />
+            </SettingsSection>
+
+            <SettingsSection title="Eksperimentelt">
+              <FeatureToggle
+                id="visual-darkmode"
+                label="Eksperimentel mørk tilstand (beta)"
+                description="Kan give uventede farver på enkelte sider"
+                enabled={settings.visual?.darkMode ?? false}
+                onChange={(v) => handleSettingChange('visual', 'darkMode', v)}
               />
             </SettingsSection>
           </div>
@@ -808,9 +811,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           <X className="size-5" />
         </button>
 
-        <SidebarProvider className="items-start min-h-0 h-full w-full">
+        <SidebarProvider className="settings-modal items-stretch min-h-0 h-full w-full">
           <Sidebar collapsible="none" className="flex border-r py-4">
-            <SidebarContent className="overflow-y-auto">
+            <SidebarContent className="overflow-hidden">
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu>
@@ -832,7 +835,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             </SidebarContent>
           </Sidebar>
 
-          <main className="flex flex-1 min-h-0 flex-col overflow-y-auto">
+          <main className="settings-modal-main flex flex-1 min-h-0 flex-col overflow-hidden">
             <header className="flex h-12 shrink-0 items-center gap-2 border-b mt-4">
               <div className="flex items-center gap-2 px-6">
                 <Breadcrumb>
@@ -851,7 +854,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </div>
             </header>
 
-            <div className="flex flex-1 flex-col gap-4 p-6">
+            <div className="settings-modal-scroll flex flex-1 min-h-0 flex-col gap-4 p-6 overflow-y-auto overscroll-contain">
               {renderContent()}
             </div>
           </main>
