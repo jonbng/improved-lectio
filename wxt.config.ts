@@ -39,6 +39,29 @@ export default defineConfig({
   webExt: {
     startUrls: ['https://www.lectio.dk/'],
   },
+  zip: {
+    excludeSources: [
+      // Reference materials (flagged by Mozilla)
+      'lectio-html/**',
+      'lectio-scripts/**',
+      'tools/**',
+      // Sensitive/config files
+      '.env',
+      '.claude/**',
+      '.mcp.json',
+      // CI/CD and docs
+      '.github/**',
+      'docs/**',
+      // Store listing assets (not part of extension)
+      'chrome-*.svg',
+      'firefox-*.svg',
+      // Development docs
+      'CLAUDE.md',
+      'ARCHITECTURE.md',
+      'SOURCE_CODE_REVIEW.md',
+      'web-ext.config.ts',
+    ],
+  },
   vite: () => ({
     plugins: [tailwindcss()],
     resolve: {
